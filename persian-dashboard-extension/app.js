@@ -804,6 +804,7 @@ async function initSettings() {
   // Apply saved theme
   document.documentElement.setAttribute("data-theme", currentTheme);
   const resolvedTheme = resolveThemeName(currentTheme);
+  document.documentElement.setAttribute("data-theme-resolved", resolvedTheme);
   document.documentElement.style.setProperty("--current-bg", `var(--bg-${resolvedTheme})`);
   document.body.style.background = `var(--bg-${resolvedTheme})`;
   
@@ -818,6 +819,7 @@ async function initSettings() {
       const themeVal = bgName;
       document.documentElement.setAttribute("data-theme", themeVal);
       const resTheme = resolveThemeName(themeVal);
+      document.documentElement.setAttribute("data-theme-resolved", resTheme);
       document.documentElement.style.setProperty("--current-bg", `var(--bg-${resTheme})`);
       document.body.style.background = `var(--bg-${resTheme})`;
       db.set("settings_theme", themeVal);
@@ -1300,34 +1302,42 @@ function setupSidebarPanels() {
     }
   });
 
-  // Scroll spy to highlight active button
+  // Throttled scroll spy to highlight active button without layout thrashing
+  let scrollTimeout = null;
   window.addEventListener("scroll", () => {
-    let activeBtnId = "btn-home";
-    let minDistance = Infinity;
-    
-    navScrollMap.forEach(item => {
-      const target = document.querySelector(item.selector);
-      if (target) {
-        const rect = target.getBoundingClientRect();
-        const dist = Math.abs(rect.top - 80); 
-        if (dist < minDistance && rect.top < window.innerHeight * 0.6 && rect.bottom > 20) {
-          minDistance = dist;
-          activeBtnId = item.btnId;
+    if (scrollTimeout) return;
+    scrollTimeout = setTimeout(() => {
+      scrollTimeout = null;
+      window.requestAnimationFrame(() => {
+        let activeBtnId = "btn-home";
+        let minDistance = Infinity;
+        
+        navScrollMap.forEach(item => {
+          const target = document.querySelector(item.selector);
+          if (target) {
+            const rect = target.getBoundingClientRect();
+            const dist = Math.abs(rect.top - 80); 
+            if (dist < minDistance && rect.top < window.innerHeight * 0.6 && rect.bottom > 20) {
+              minDistance = dist;
+              activeBtnId = item.btnId;
+            }
+          }
+        });
+
+        if (window.scrollY < 100) {
+          activeBtnId = "btn-home";
         }
-      }
-    });
 
-    if (window.scrollY < 100) {
-      activeBtnId = "btn-home";
-    }
-
-    document.querySelectorAll(".floating-sidebar .sidebar-btn").forEach(btn => {
-      if (btn.id === activeBtnId) {
-        btn.classList.add("active");
-      } else if (btn.id !== "btn-settings") {
-        btn.classList.remove("active");
-      }
-    });
+        const buttons = document.querySelectorAll(".floating-sidebar .sidebar-btn");
+        buttons.forEach(btn => {
+          if (btn.id === activeBtnId) {
+            btn.classList.add("active");
+          } else if (btn.id !== "btn-settings") {
+            btn.classList.remove("active");
+          }
+        });
+      });
+    }, 80);
   });
 
   // Drawer panel close handlers fallback
@@ -2877,6 +2887,23 @@ window.onCalendarDateSelected = function(jy, jm, jd) {
   updateInteractiveAnalytics(jy, jm, jd);
 };
 
+function getCurvePath(points) {
+  if (points.length === 0) return "";
+  if (points.length === 1) return `M ${points[0].x} ${points[0].y}`;
+  
+  let d = `M ${points[0].x} ${points[0].y}`;
+  for (let i = 0; i < points.length - 1; i++) {
+    const p0 = points[i];
+    const p1 = points[i + 1];
+    const cpX1 = p0.x + (p1.x - p0.x) * 0.4;
+    const cpY1 = p0.y;
+    const cpX2 = p0.x + (p1.x - p0.x) * 0.6;
+    const cpY2 = p1.y;
+    d += ` C ${cpX1} ${cpY1}, ${cpX2} ${cpY2}, ${p1.x} ${p1.y}`;
+  }
+  return d;
+}
+
 async function renderMonthlyAndYearlyCharts(jy, jm) {
   const monthlyContainer = document.getElementById("monthly-bar-chart");
   const yearlyContainer = document.getElementById("yearly-bar-chart");
@@ -2899,6 +2926,7 @@ async function renderMonthlyAndYearlyCharts(jy, jm) {
 
   // 1. Monthly Chart calculation
   const daysInMonth = getJalaliMonthLength(jy, jm);
+  const monthlyPoints = [];
   
   for (let day = 1; day <= daysInMonth; day++) {
     const dKey = getGregorianDateKeyFromJalali(jy, jm, day);
@@ -2928,38 +2956,22 @@ async function renderMonthlyAndYearlyCharts(jy, jm) {
     const totalDone = compChecklist + compPlanner + compHabits;
     const totalItems = totChecklist + totPlanner + totHabits;
     const progressPercent = totalItems > 0 ? Math.round((totalDone / totalItems) * 100) : 0;
-
-    const col = document.createElement("div");
-    col.className = "chart-bar-col";
     
     const isSelected = (jy === selectedCalYear && jm === selectedCalMonth && day === selectedCalDay);
     
-    col.innerHTML = `
-      <div class="chart-bar-track">
-        <div class="chart-bar-fill ${isSelected ? 'selected' : ''}" 
-             style="height: ${progressPercent}%;" 
-             data-tooltip="روز ${toPersianDigits(day)}: ${toPersianDigits(progressPercent)}٪ پیشرفت" 
-             data-day="${day}"></div>
-      </div>
-      <span class="chart-bar-label">${toPersianDigits(day)}</span>
-    `;
-
-    col.querySelector(".chart-bar-fill").addEventListener("click", () => {
-      selectedCalYear = jy;
-      selectedCalMonth = jm;
-      selectedCalDay = day;
-      
-      // Update calendar UI grid highlight
-      renderCalendarGrid();
-      
-      // Update reports
-      updateInteractiveAnalytics(jy, jm, day);
-    });
-
-    monthlyContainer.appendChild(col);
+    // Map to SVG coordinates: viewBox="0 0 800 180"
+    // Margins: Left 40, Right 20, Top 15, Bottom 25. Width: 740, Height: 140
+    const x = 40 + ((day - 1) / (daysInMonth - 1)) * 740;
+    const y = 155 - (progressPercent / 100) * 140;
+    
+    monthlyPoints.push({ day, percent: progressPercent, x, y, isSelected });
   }
 
+  // Render Monthly SVG
+  renderLineChartSVG(monthlyPoints, monthlyContainer, true, jy, jm);
+
   // 2. Yearly Chart calculation
+  const yearlyPoints = [];
   for (let m = 1; m <= 12; m++) {
     const daysInM = getJalaliMonthLength(jy, m);
     let totalMonthProgress = 0;
@@ -2997,22 +3009,169 @@ async function renderMonthlyAndYearlyCharts(jy, jm) {
     }
 
     const monthAvgPercent = daysWithData > 0 ? Math.round((totalMonthProgress / daysWithData) * 100) : 0;
-
-    const col = document.createElement("div");
-    col.className = "chart-bar-col";
-    
     const isSelectedMonth = (jy === selectedCalYear && m === selectedCalMonth);
-
-    col.innerHTML = `
-      <div class="chart-bar-track">
-        <div class="chart-bar-fill" 
-             style="height: ${monthAvgPercent}%; ${isSelectedMonth ? 'background: linear-gradient(180deg, #ffc43d 0%, #ffb300 100%);' : ''}" 
-             data-tooltip="${JALALI_MONTHS[m - 1]}: ${toPersianDigits(monthAvgPercent)}٪ پیشرفت متوسط"></div>
-      </div>
-      <span class="chart-bar-label">${JALALI_MONTHS[m - 1].substring(0, 3)}</span>
-    `;
-
-    yearlyContainer.appendChild(col);
+    
+    // Map to SVG coordinates: viewBox="0 0 800 180"
+    // Margins: Left 40, Right 20, Top 15, Bottom 25. Width: 740, Height: 140
+    const x = 40 + ((m - 1) / 11) * 740;
+    const y = 155 - (monthAvgPercent / 100) * 140;
+    
+    yearlyPoints.push({ month: m, percent: monthAvgPercent, x, y, isSelected: isSelectedMonth });
   }
+
+  // Render Yearly SVG
+  renderLineChartSVG(yearlyPoints, yearlyContainer, false, jy, jm);
 }
+
+function renderLineChartSVG(points, container, isMonthly, jy, jm) {
+  const width = 800;
+  const height = 180;
+
+  // Create tooltip
+  const tooltip = document.createElement("div");
+  tooltip.className = "chart-tooltip";
+  container.appendChild(tooltip);
+
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+  svg.setAttribute("class", "chart-svg");
+
+  const gradId = isMonthly ? "chart-area-grad-monthly" : "chart-area-grad-yearly";
+  const accentColor = "var(--accent-gold)";
+
+  // Defs
+  const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
+  defs.innerHTML = `
+    <linearGradient id="${gradId}" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="${accentColor}" stop-opacity="0.28"/>
+      <stop offset="100%" stop-color="${accentColor}" stop-opacity="0.0"/>
+    </linearGradient>
+  `;
+  svg.appendChild(defs);
+
+  // Grid lines
+  const gridYs = [15, 50, 85, 120, 155];
+  const gridPercents = ["۱۰۰٪", "۷۵٪", "۵۰٪", "۲۵٪", "۰٪"];
+
+  gridYs.forEach((y, idx) => {
+    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+    line.setAttribute("x1", "40");
+    line.setAttribute("y1", y);
+    line.setAttribute("x2", "780");
+    line.setAttribute("y2", y);
+    line.setAttribute("class", idx === 0 || idx === 4 ? "chart-grid-line" : "chart-grid-line-dashed");
+    svg.appendChild(line);
+
+    const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    text.setAttribute("x", "32");
+    text.setAttribute("y", y);
+    text.setAttribute("text-anchor", "end");
+    text.setAttribute("dominant-baseline", "middle");
+    text.setAttribute("class", "chart-axis-text");
+    text.textContent = gridPercents[idx];
+    svg.appendChild(text);
+  });
+
+  // Curve and Area path
+  const curvePath = getCurvePath(points);
+  if (curvePath) {
+    // Fill area under path
+    const areaPathStr = `${curvePath} L ${points[points.length - 1].x} 155 L ${points[0].x} 155 Z`;
+    const areaPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    areaPath.setAttribute("d", areaPathStr);
+    areaPath.setAttribute("class", "chart-area");
+    areaPath.setAttribute("fill", `url(#${gradId})`);
+    svg.appendChild(areaPath);
+
+    // Line path
+    const linePath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    linePath.setAttribute("d", curvePath);
+    linePath.setAttribute("class", "chart-line");
+    svg.appendChild(linePath);
+  }
+
+  // Dots, Labels and Interactive Zones
+  points.forEach((p, idx) => {
+    // X-axis label
+    const drawXLabel = isMonthly ? (idx % 2 === 0 || idx === points.length - 1) : true;
+    if (drawXLabel) {
+      const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      text.setAttribute("x", p.x);
+      text.setAttribute("y", "174");
+      text.setAttribute("text-anchor", "middle");
+      text.setAttribute("class", isMonthly ? "chart-axis-text" : "chart-axis-text-fa");
+      text.textContent = isMonthly ? toPersianDigits(p.day) : JALALI_MONTHS[p.month - 1].substring(0, 7);
+      svg.appendChild(text);
+    }
+
+    // Glow ring if selected
+    if (p.isSelected) {
+      const glowCircle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      glowCircle.setAttribute("cx", p.x);
+      glowCircle.setAttribute("cy", p.y);
+      glowCircle.setAttribute("r", "10");
+      glowCircle.setAttribute("class", "chart-point-glow active");
+      svg.appendChild(glowCircle);
+    }
+
+    // Dot circle
+    const dot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    dot.setAttribute("cx", p.x);
+    dot.setAttribute("cy", p.y);
+    dot.setAttribute("r", p.isSelected ? "5.5" : "3.5");
+    dot.setAttribute("class", `chart-point ${p.isSelected ? 'active' : ''}`);
+    svg.appendChild(dot);
+
+    // Interactive hover circle zone
+    const inter = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    inter.setAttribute("cx", p.x);
+    inter.setAttribute("cy", p.y);
+    inter.setAttribute("r", "16");
+    inter.setAttribute("class", "chart-point-interactive");
+
+    inter.addEventListener("mouseenter", () => {
+      dot.setAttribute("r", "6.5");
+      dot.classList.add("hovered");
+      
+      tooltip.textContent = isMonthly
+        ? `روز ${toPersianDigits(p.day)}: ${toPersianDigits(p.percent)}٪ پیشرفت`
+        : `${JALALI_MONTHS[p.month - 1]}: ${toPersianDigits(p.percent)}٪ پیشرفت متوسط`;
+      tooltip.classList.add("visible");
+
+      // Position tooltip relative to container
+      const pctX = p.x / width;
+      const pctY = p.y / height;
+      tooltip.style.left = `${pctX * 100}%`;
+      tooltip.style.top = `${pctY * 100}%`;
+    });
+
+    inter.addEventListener("mouseleave", () => {
+      dot.setAttribute("r", p.isSelected ? "5.5" : "3.5");
+      dot.classList.remove("hovered");
+      tooltip.classList.remove("visible");
+    });
+
+    inter.addEventListener("click", () => {
+      if (isMonthly) {
+        selectedCalYear = jy;
+        selectedCalMonth = jm;
+        selectedCalDay = p.day;
+        renderCalendarGrid();
+        updateInteractiveAnalytics(jy, jm, p.day);
+      } else {
+        selectedCalYear = jy;
+        selectedCalMonth = p.month;
+        selectedCalDay = 1;
+        renderCalendarGrid();
+        updateInteractiveAnalytics(jy, p.month, 1);
+      }
+      renderMonthlyAndYearlyCharts(jy, jm);
+    });
+
+    svg.appendChild(inter);
+  });
+
+  container.appendChild(svg);
+}
+
 

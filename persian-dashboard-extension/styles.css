@@ -1,16 +1,16 @@
 /* CSS Variables and Design Tokens */
 :root {
-  /* Theme-specific background gradients */
-  --bg-gradient-blue: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #638ecc 100%);
-  --bg-gradient-dark: linear-gradient(135deg, #050811 0%, #151b2d 50%, #090c15 100%);
-  --bg-gradient-sunset: linear-gradient(135deg, #3a1c3e 0%, #833ab4 50%, #fd5e53 100%);
-  --bg-gradient-emerald: linear-gradient(135deg, #0b221e 0%, #143f35 50%, #1c5c4e 100%);
-  --bg-gradient-purple: linear-gradient(135deg, #120c24 0%, #2c1a4d 50%, #462c7a 100%);
+  /* Premium Theme-specific background gradients */
+  --bg-gradient-blue: linear-gradient(135deg, #091122 0%, #111b33 50%, #1a2744 100%);
+  --bg-gradient-dark: linear-gradient(135deg, #040407 0%, #0a0a0f 50%, #111119 100%);
+  --bg-gradient-sunset: linear-gradient(135deg, #18090d 0%, #2b0f15 50%, #501d24 100%);
+  --bg-gradient-emerald: linear-gradient(135deg, #061411 0%, #0e2922 50%, #173f35 100%);
+  --bg-gradient-purple: linear-gradient(135deg, #0a0614 0%, #130a24 50%, #20113c 100%);
 
-  /* Default theme values */
+  /* Default/Fallback theme values */
   --current-bg: var(--bg-gradient-blue);
-  --card-bg: rgba(18, 18, 20, 0.72);
-  --card-bg-hover: rgba(26, 26, 30, 0.78);
+  --card-bg: rgba(15, 23, 42, 0.65);
+  --card-bg-hover: rgba(30, 41, 59, 0.75);
   --card-border: rgba(255, 255, 255, 0.08);
   --card-border-hover: rgba(255, 255, 255, 0.15);
   
@@ -20,12 +20,12 @@
   --text-muted: rgba(255, 255, 255, 0.45);
   
   /* Accent colors */
-  --accent-gold: #ffb300;
-  --accent-gold-hover: #ffc43d;
-  --accent-blue: #3b82f6;
-  --accent-blue-hover: #60a5fa;
-  --accent-red: #ef4444;
-  --accent-red-hover: #f87171;
+  --accent-gold: #38bdf8;
+  --accent-gold-hover: #7dd3fc;
+  --accent-blue: #0284c7;
+  --accent-blue-hover: #0369a1;
+  --accent-red: #f43f5e;
+  --accent-red-hover: #fb7185;
   
   /* Fonts */
   --font-fa: 'Vazirmatn', -apple-system, BlinkMacSystemFont, Tahoma, sans-serif;
@@ -33,6 +33,67 @@
   
   /* Layout sizes */
   --sidebar-width: 68px;
+}
+
+/* Dynamic theme variables matching background colors cohesively */
+html[data-theme-resolved="gradient-blue"] {
+  --current-bg: var(--bg-gradient-blue);
+  --accent-gold: #38bdf8;
+  --accent-gold-hover: #7dd3fc;
+  --accent-blue: #0284c7;
+  --accent-blue-hover: #0369a1;
+  --card-bg: rgba(15, 23, 42, 0.65);
+  --card-bg-hover: rgba(30, 41, 59, 0.75);
+  --card-border: rgba(56, 189, 248, 0.12);
+  --card-border-hover: rgba(56, 189, 248, 0.25);
+}
+
+html[data-theme-resolved="gradient-dark"] {
+  --current-bg: var(--bg-gradient-dark);
+  --accent-gold: #d4af37;
+  --accent-gold-hover: #f3e5ab;
+  --accent-blue: #8a95a5;
+  --accent-blue-hover: #b0b9c6;
+  --card-bg: rgba(10, 10, 15, 0.72);
+  --card-bg-hover: rgba(18, 18, 25, 0.82);
+  --card-border: rgba(212, 175, 55, 0.12);
+  --card-border-hover: rgba(212, 175, 55, 0.25);
+}
+
+html[data-theme-resolved="gradient-sunset"] {
+  --current-bg: var(--bg-gradient-sunset);
+  --accent-gold: #ff7b90;
+  --accent-gold-hover: #ff9fb0;
+  --accent-blue: #ea580c;
+  --accent-blue-hover: #f97316;
+  --card-bg: rgba(24, 9, 13, 0.72);
+  --card-bg-hover: rgba(43, 15, 21, 0.82);
+  --card-border: rgba(255, 123, 144, 0.12);
+  --card-border-hover: rgba(255, 123, 144, 0.25);
+}
+
+html[data-theme-resolved="gradient-emerald"] {
+  --current-bg: var(--bg-gradient-emerald);
+  --accent-gold: #52b788;
+  --accent-gold-hover: #74c69d;
+  --accent-blue: #2d6a4f;
+  --accent-blue-hover: #40916c;
+  --card-bg: rgba(6, 20, 17, 0.72);
+  --card-bg-hover: rgba(14, 41, 34, 0.82);
+  --card-border: rgba(82, 183, 136, 0.12);
+  --card-border-hover: rgba(82, 183, 136, 0.25);
+}
+
+html[data-theme-resolved="gradient-purple"] {
+  --current-bg: var(--bg-gradient-purple);
+  --accent-gold: #c8b6ff;
+  --accent-gold-hover: #e7c6ff;
+  --accent-blue: #9d4edd;
+  --accent-blue-hover: #c77dff;
+  --card-bg: rgba(10, 6, 20, 0.75);
+  --card-bg-hover: rgba(19, 10, 36, 0.82);
+  --card-border: rgba(200, 182, 255, 0.12);
+  --card-border-hover: rgba(200, 182, 255, 0.25);
 }
 
 /* Global Reset & Base Styles */
@@ -67,7 +128,6 @@ body {
   flex-direction: column; /* Stack dashboard and planner vertically */
   justify-content: flex-start;
   align-items: center;
-  transition: background 0.8s ease;
 }
 
 /* Background overlay to smooth theme transitions */
@@ -630,12 +690,14 @@ body {
 
 .shortcuts-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
+  grid-template-columns: repeat(auto-fill, 72px);
+  gap: 16px 12px;
+  justify-content: center;
   overflow-y: auto;
   max-height: calc(100vh - 280px);
   padding: 4px;
 }
+
 
 /* Individual Shortcut Item */
 .shortcut-item {
@@ -3644,93 +3706,129 @@ html {
 }
 
 .bar-chart-container {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  height: 160px;
-  padding: 10px 0;
-  border-bottom: 1.5px solid rgba(255, 255, 255, 0.08);
-  gap: 4px;
-  overflow: hidden; /* Prevent ugly scrollbars and force scale-to-fit */
-}
-
-.chart-bar-col {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  flex: 1;
-  min-width: 8px;
-  height: 100%;
-  justify-content: flex-end;
-  gap: 8px;
-}
-
-.chart-bar-track {
-  width: 8px; /* Fixed capsule track width for monthly chart */
-  height: calc(100% - 20px);
-  background: rgba(255, 255, 255, 0.06); /* Translucent pill track */
-  border-radius: 4px;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
   position: relative;
-}
-
-#yearly-bar-chart .chart-bar-track {
-  width: 20px; /* Wider track for yearly chart */
-  border-radius: 6px;
-}
-
-.chart-bar-fill {
   width: 100%;
-  border-radius: 4px;
-  background: linear-gradient(180deg, var(--accent-gold-hover) 0%, var(--accent-gold) 100%);
-  box-shadow: 0 0 10px rgba(255, 179, 0, 0.3);
-  transition: height 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
-  cursor: pointer;
-  position: relative;
+  height: 180px;
+  border-bottom: 1.5px solid rgba(255, 255, 255, 0.08);
+  overflow: visible;
+  padding: 10px 0;
 }
 
-#yearly-bar-chart .chart-bar-fill {
-  border-radius: 6px;
+/* SVG Line Chart Styling */
+.chart-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  overflow: visible;
 }
 
-.chart-bar-fill:hover {
-  filter: brightness(1.2);
+.chart-grid-line {
+  stroke: rgba(255, 255, 255, 0.05);
+  stroke-width: 1;
 }
 
-.chart-bar-fill::after {
-  content: attr(data-tooltip);
-  position: absolute;
-  bottom: 100%;
-  left: 50%;
-  transform: translateX(-50%) translateY(-6px);
-  background: rgba(15, 23, 42, 0.95);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  color: white;
-  padding: 4px 8px;
-  border-radius: 6px;
-  font-size: 0.68rem;
-  white-space: nowrap;
-  opacity: 0;
-  visibility: hidden;
-  transition: all 0.2s ease;
-  z-index: 10;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-  pointer-events: none;
+.chart-grid-line-dashed {
+  stroke: rgba(255, 255, 255, 0.05);
+  stroke-dasharray: 4 4;
+  stroke-width: 1;
 }
 
-.chart-bar-fill:hover::after {
-  opacity: 1;
-  visibility: visible;
-  transform: translateX(-50%) translateY(-2px);
-}
-
-.chart-bar-label {
-  font-size: 0.72rem;
-  color: var(--text-muted);
+.chart-axis-text {
+  font-size: 10px;
+  fill: var(--text-muted);
   font-family: var(--font-en);
 }
+
+.chart-axis-text-fa {
+  font-size: 10px;
+  fill: var(--text-muted);
+  font-family: var(--font-fa);
+}
+
+.chart-line {
+  stroke: var(--accent-gold);
+  stroke-width: 3.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+  filter: drop-shadow(0 2px 10px rgba(255, 196, 61, 0.35));
+}
+
+.chart-area {
+  fill: url(#chart-area-grad-monthly), url(#chart-area-grad-yearly);
+}
+
+.chart-point {
+  fill: #121829;
+  stroke: var(--accent-gold);
+  stroke-width: 2;
+  transition: r 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), stroke-width 0.2s ease, fill 0.2s ease;
+}
+
+.chart-point.active {
+  fill: #ffffff;
+  stroke: var(--accent-gold);
+  stroke-width: 3.5;
+  r: 5.5;
+}
+
+.chart-point.hovered {
+  fill: #ffffff;
+  stroke: var(--accent-gold);
+  stroke-width: 3;
+}
+
+.chart-point-glow {
+  fill: var(--accent-gold);
+  opacity: 0.15;
+  pointer-events: none;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: pulse-glow 2s infinite ease-in-out;
+}
+
+.chart-point-glow.active {
+  opacity: 0.25;
+}
+
+@keyframes pulse-glow {
+  0% { transform: scale(1); opacity: 0.15; }
+  50% { transform: scale(1.45); opacity: 0.35; }
+  100% { transform: scale(1); opacity: 0.15; }
+}
+
+.chart-point-interactive {
+  fill: transparent;
+  cursor: pointer;
+}
+
+/* Custom Tooltip */
+.chart-tooltip {
+  position: absolute;
+  background: rgba(15, 23, 42, 0.95);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-family: var(--font-fa);
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  z-index: 100;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  transform: translate(-50%, -100%) translateY(-8px);
+  white-space: nowrap;
+}
+
+.chart-tooltip.visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(-50%, -100%) translateY(-12px);
+}
+
 
 /* Selected calendar day highlight style */
 .calendar-day.selected {
