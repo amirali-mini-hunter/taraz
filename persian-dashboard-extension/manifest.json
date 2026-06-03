@@ -1,0 +1,17 @@
+{
+  "manifest_version": 3,
+  "name": "دستیار جدید | Persian Dashboard",
+  "version": "1.0.0",
+  "description": "یک شروع زیبا و کاربردی برای تب جدید شما همراه با تقویم جلالی، آب‌وهوا، یادداشت و میانبرها",
+  "chrome_url_overrides": {
+    "newtab": "index.html"
+  },
+  "permissions": [
+    "storage"
+  ],
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}

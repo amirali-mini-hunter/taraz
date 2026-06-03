@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>دستیار جدید | تب جدید فارسی</title>
+  <!-- Google Fonts for Vazirmatn -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  
+  <script>
+    // Apply saved theme instantly to prevent background flashing
+    (function() {
+      try {
+        const theme = localStorage.getItem('settings_theme');
+        const themeName = theme ? JSON.parse(theme) : 'gradient-blue';
+        document.documentElement.setAttribute('data-theme', themeName);
+        document.documentElement.style.setProperty('--current-bg', `var(--bg-${themeName})`);
+      } catch (e) {
+        console.error("FOUC mitigation failed", e);
+      }
+    })();
+  </script>
+</head>
+<body>
+
+  <!-- Background Layer -->
+  <div class="bg-gradient-overlay"></div>
+
+  <!-- Main Container -->
+  <div class="dashboard-container">
+    
+    <!-- Right Floating Sidebar / Navigation Dock -->
+    <aside class="floating-sidebar">
+      <div class="sidebar-top">
+        <button class="sidebar-btn active" id="btn-home" title="داشبورد">
+          <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" class="sidebar-icon"><rect x="3" y="3" width="7" height="9"></rect><rect x="14" y="3" width="7" height="5"></rect><rect x="14" y="12" width="7" height="9"></rect><rect x="3" y="16" width="7" height="5"></rect></svg>
+        </button>
+        
+        <div class="sidebar-divider"></div>
+        
+        <button class="sidebar-btn" id="btn-nav-calendar" title="ساعت و تقویم">
+          <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+        </button>
+        <button class="sidebar-btn" id="btn-nav-shortcuts" title="میانبرها">
+          <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+        </button>
+        <button class="sidebar-btn" id="btn-nav-notes" title="یادداشت‌ها و چک‌لیست">
+          <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+        </button>
+        <button class="sidebar-btn" id="btn-nav-water" title="آب مصرفی">
+          <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path></svg>
+        </button>
+        <button class="sidebar-btn" id="btn-nav-tasks" title="برنامه‌ریزی امروز">
+          <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+        </button>
+        <button class="sidebar-btn" id="btn-nav-habits" title="دفترچه عادات">
+          <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path></svg>
+        </button>
+        <button class="sidebar-btn" id="btn-nav-charts" title="نمودارها و گزارشات">
+          <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+        </button>
+      </div>
+      <div class="sidebar-bottom">
+        <button class="sidebar-btn" id="btn-settings" title="تنظیمات">
+          <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Grid Content -->
+    <main class="dashboard-grid">
+      
+      <!-- Left Column: Clock, Weather, and Calendar -->
+      <section class="grid-column left-column">
+        
+        <!-- Clock & Weather Card -->
+        <div class="glass-card clock-weather-card">
+          <div class="clock-section" style="position: relative;">
+            <div id="battery-status-widget" class="battery-status-widget" title="وضعیت باتری">
+              <svg class="battery-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="6" width="18" height="12" rx="2" ry="2"></rect><line x1="23" y1="11" x2="23" y2="13"></line></svg>
+              <span id="battery-percent-text">--%</span>
+            </div>
+            <h2 id="digital-clock" class="digital-clock">00:00:00</h2>
+            <div id="persian-full-date" class="persian-full-date">سه‌شنبه، ۱۲ خرداد ۱۴۰۵</div>
+          </div>
+          
+          <div class="divider"></div>
+          
+          <div class="weather-section">
+            <div class="weather-main">
+              <div id="weather-icon-container" class="weather-icon">
+                <!-- Fallback SVG icon for weather -->
+                <svg viewBox="0 0 24 24" width="44" height="44" stroke="#ffb300" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+              </div>
+              <div class="weather-temp">
+                <span id="weather-temp-val">--</span><span class="temp-unit">°C</span>
+              </div>
+            </div>
+            <div class="weather-info">
+              <div id="weather-desc" class="weather-desc">در حال بارگذاری آب و هوا...</div>
+              <div id="weather-city" class="weather-city">تهران</div>
+            </div>
+          </div>
+          
+          <div class="card-actions">
+            <button class="action-btn" id="btn-prayer">
+              <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5"></path><path d="M2 12l10 5 10-5"></path></svg>
+              <span>اوقات شرعی</span>
+            </button>
+            <button class="action-btn" id="btn-timer">
+              <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+              <span>تایمر</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Jalali Calendar Card -->
+        <div class="glass-card calendar-card">
+          <div class="calendar-header">
+            <button class="calendar-nav-btn" id="prev-month" title="ماه قبل">
+              <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </button>
+            <h3 id="calendar-title" class="calendar-title">خرداد ۱۴۰۵</h3>
+            <button class="calendar-nav-btn" id="next-month" title="ماه بعد">
+              <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            </button>
+          </div>
+
+          <div class="calendar-weekdays">
+            <span>ش</span>
+            <span>ی</span>
+            <span>د</span>
+            <span>س</span>
+            <span>چ</span>
+            <span>پ</span>
+            <span>ج</span>
+          </div>
+
+          <div id="calendar-days-grid" class="calendar-days-grid">
+            <!-- Dynamically populated -->
+          </div>
+
+          <div class="calendar-footer">
+            <button class="calendar-footer-btn" id="btn-date-converter">
+              <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 3 21 3 21 8"></polyline><line x1="4" y1="20" x2="21" y2="3"></line><polyline points="21 16 21 21 16 21"></polyline><line x1="15" y1="15" x2="21" y2="21"></line><line x1="4" y1="4" x2="9" y2="9"></line></svg>
+              <span>تبدیل تاریخ</span>
+            </button>
+            <a href="https://www.time.ir/" target="_blank" class="calendar-footer-btn time-ir-link">
+              <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+              <span>تقویم سراسری</span>
+            </a>
+          </div>
+        </div>
+        
+        <!-- Water Tracker Card removed from here and relocated to the right column -->
+
+      </section>
+
+      <!-- Center Column: Search & Shortcuts -->
+      <section class="grid-column center-column">
+
+        <!-- Greeting & Poem Card (Creative Section) -->
+        <div class="glass-card greeting-poem-card">
+          <div class="greeting-poem-content">
+            <h3 id="greeting-text" class="greeting-text">سلام، وقت بخیر</h3>
+            <div class="poem-container">
+              <p id="poem-verse-1" class="poem-verse">صبح است و ژاله می‌چکد از روی لاله سر به سر</p>
+              <p id="poem-verse-2" class="poem-verse">گویا که مِهر رخ نمود از پرده‌ی شب جلوه‌گر</p>
+              <div id="poem-poet" class="poem-poet">ـ حافظ</div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Search Widget -->
+        <div class="search-container">
+          <form id="search-form" class="search-form" action="https://www.google.com/search" method="get">
+            <div class="search-wrapper">
+              <input type="text" name="q" id="search-input" class="search-input" placeholder="جستجو در گوگل..." autocomplete="off" autofocus>
+              <button type="submit" class="search-submit-btn" aria-label="جستجو">
+                <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Shortcuts Grid Card -->
+        <div class="glass-card shortcuts-card">
+          <div class="shortcuts-header">
+            <h4>میانبرها</h4>
+            <button id="btn-edit-shortcuts" class="edit-mode-btn" title="ویرایش میانبرها">
+              <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+            </button>
+          </div>
+          <div id="shortcuts-grid" class="shortcuts-grid">
+            <!-- Dynamically populated shortcuts -->
+            
+            <!-- The Add Button is placed inside the grid -->
+            <button id="btn-add-shortcut" class="shortcut-item add-shortcut-btn" title="افزودن میانبر">
+              <div class="shortcut-icon-wrapper">
+                <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+              </div>
+              <span class="shortcut-title">افزودن</span>
+            </button>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- Right Column: Quick Notes (Scratchpad) & Relocated Water Tracker -->
+      <section class="grid-column right-column">
+        
+        <div class="glass-card scratchpad-card">
+          <!-- Notebook/Checklist Tabs -->
+          <div class="notebook-tabs">
+            <button class="notebook-tab-btn active" id="tab-btn-notes">یادداشت‌ها</button>
+            <button class="notebook-tab-btn" id="tab-btn-checklist">چک‌لیست</button>
+          </div>
+          
+          <div class="notebook-container">
+            <!-- Sidebar for file/note list -->
+            <div class="notebook-sidebar">
+              <div class="notebook-sidebar-header">
+                <h4>دفترچه یادداشت</h4>
+                <div class="notebook-sidebar-actions">
+                  <button id="btn-notebook-new" class="notebook-new-btn" title="یادداشت جدید">
+                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                  </button>
+                  <button id="btn-notebook-back" class="notebook-back-btn" title="بازگشت به یادداشت">
+                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                  </button>
+                </div>
+              </div>
+              <div id="notebook-notes-list" class="notebook-notes-list">
+                <!-- Dynamically populated list of notes -->
+              </div>
+            </div>
+            
+            <!-- Editor area -->
+            <div class="notebook-editor">
+              <div class="notebook-editor-header">
+                <button id="btn-notebook-list" class="notebook-list-btn" title="لیست یادداشت‌ها">
+                  <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                </button>
+                <div class="notebook-editor-actions">
+                  <span id="notebook-save-indicator" class="notebook-save-indicator">ذخیره شد</span>
+                  <button id="btn-notebook-save" class="notebook-save-btn">ذخیره</button>
+                  <button id="btn-notebook-history" class="notebook-history-btn" title="تاریخچه تغییرات">
+                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                  </button>
+                  <button id="btn-notebook-delete" class="notebook-delete-btn" title="حذف یادداشت">
+                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                  </button>
+                </div>
+              </div>
+              <div class="notebook-editor-body">
+                <input type="text" id="notebook-title-input" class="notebook-title-body-input" placeholder="عنوان یادداشت..." autocomplete="off">
+                <textarea id="notebook-textarea" placeholder="یادداشتی بنویسید..."></textarea>
+                <div class="notebook-note-metadata" style="display:flex; justify-content:space-between; font-size:0.7rem; color:var(--text-muted); padding:4px 0; border-top:1px solid rgba(255,255,255,0.05); margin-top:4px; direction:rtl;">
+                  <span id="notebook-meta-created">ایجاد: --</span>
+                  <span id="notebook-meta-updated">ویرایش: --</span>
+                </div>
+                <div id="notebook-empty-state" class="notebook-empty-state hidden">
+                  <svg viewBox="0 0 24 24" width="48" height="48" stroke="rgba(255,255,255,0.2)" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                  <p>یک یادداشت از لیست انتخاب کنید یا یادداشت جدیدی بنویسید.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Checklist Container (hidden by default) -->
+          <div class="checklist-container hidden">
+            <div class="checklist-form">
+              <input type="text" id="checklist-input" placeholder="کار جدید...">
+              <div class="checklist-due-wrapper">
+                <label>مهلت:</label>
+                <button type="button" id="checklist-due-btn" class="datepicker-trigger-btn">
+                  <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                  <span id="checklist-due-label">بدون مهلت</span>
+                </button>
+                <input type="hidden" id="checklist-due-date">
+              </div>
+              <button id="btn-checklist-add" class="notebook-save-btn">افزودن</button>
+            </div>
+            <div id="checklist-items-list" class="checklist-items-list">
+              <!-- Dynamically populated checklist items -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Relocated Water Tracker Card -->
+        <div class="glass-card water-tracker-card">
+          <div class="water-tracker-header">
+            <h4>نوشیدن آب روزانه</h4>
+            <span id="water-progress-text">۰ / ۸ لیوان</span>
+          </div>
+          <div class="water-tracker-body">
+            <div class="water-progress-container">
+              <svg class="water-progress-ring" width="70" height="70">
+                <circle class="water-progress-ring-bg" stroke="rgba(255, 255, 255, 0.08)" stroke-width="5" fill="transparent" r="30" cx="35" cy="35"/>
+                <circle id="water-progress-ring-circle" stroke="#22a1f8" stroke-dasharray="188.5" stroke-dashoffset="188.5" stroke-width="5" stroke-linecap="round" fill="transparent" r="30" cx="35" cy="35"/>
+              </svg>
+              <div class="water-glass-wrapper">
+                <div class="water-glass">
+                  <div class="water-liquid" id="water-liquid-level"></div>
+                </div>
+                <div class="water-glass-handle"></div>
+              </div>
+            </div>
+            <div class="water-tracker-actions">
+              <button id="btn-water-add" class="water-action-btn" title="افزودن یک لیوان">
+                <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                <span>+ ۱ لیوان</span>
+              </button>
+              <button id="btn-water-reset" class="water-action-btn secondary" title="بازنشانی">
+                <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Planner Section (دفتر برنامه‌ریزی) -->
+  <div id="planner-section" class="planner-section">
+    <div class="planner-header">
+      <div class="planner-title-group">
+        <button id="btn-scroll-top" class="scroll-top-btn" title="بازگشت به بالا">
+          <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>
+        </button>
+        <div>
+          <h2>دفتر برنامه‌ریزی</h2>
+          <p>ردیاب هوشمند اهداف روزانه و هفتگی شما</p>
+        </div>
+      </div>
+      <div class="planner-header-actions">
+        <button id="btn-manage-categories" class="planner-action-btn" title="مدیریت دسته‌بندی‌ها">
+          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+          <span>دسته‌بندی‌ها</span>
+        </button>
+        <div class="planner-summary-stats">
+          <div class="stat-card">
+            <span class="stat-num" id="planner-stat-today">۰٪</span>
+            <span class="stat-label">پیشرفت امروز</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-num" id="planner-stat-habits">۰</span>
+            <span class="stat-label">عادت‌های فعال</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="planner-grid">
+      <!-- Daily Tasks -->
+      <section class="planner-card glass-card">
+        <div class="card-header-with-action">
+          <h3>کارهای امروز</h3>
+          <button id="btn-add-planner-task" class="circle-action-btn" title="تسک جدید">+</button>
+        </div>
+        <div class="planner-task-form hidden" id="planner-task-form">
+          <input type="text" id="planner-task-input" placeholder="مثال: مطالعه فصل اول کتاب...">
+          
+          <div class="form-row-custom" style="display: flex; gap: 8px; margin: 8px 0;">
+            <select id="planner-task-category" style="flex: 1;">
+              <!-- Dynamically populated -->
+            </select>
+            <select id="planner-task-priority" style="flex: 1;">
+              <option value="high">اولویت بالا 🔴</option>
+              <option value="medium" selected>اولویت متوسط 🟡</option>
+              <option value="low">اولویت پایین 🔵</option>
+            </select>
+          </div>
+          
+          <div class="form-row-custom" style="display: flex; gap: 8px; margin-bottom: 8px;">
+            <select id="planner-task-timeofday" style="flex: 1;">
+              <option value="morning">صبح 🌅</option>
+              <option value="noon" selected>ظهر/عصر ☀️</option>
+              <option value="evening">غروب 🌇</option>
+              <option value="night">شب 🌙</option>
+            </select>
+            <input type="number" id="planner-task-duration" placeholder="زمان تخمینی (دقیقه)" style="flex: 1; background: rgba(0, 0, 0, 0.2); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px; padding: 8px 12px; color: white; font-family: var(--font-fa); font-size: 0.85rem; outline: none;" min="0">
+          </div>
+          
+          <div class="form-actions">
+            <button id="btn-save-planner-task" class="notebook-save-btn">افزودن</button>
+            <button id="btn-cancel-planner-task" class="modal-cancel-btn">لغو</button>
+          </div>
+        </div>
+        
+        <!-- Pomodoro Timer Widget -->
+        <div class="pomodoro-widget-inline">
+          <div class="pomo-info">
+            <span class="pomo-label" id="pomo-status-label">🍅 زمان تمرکز:</span>
+            <span class="pomo-time" id="pomo-display-time">۲۵:۰۰</span>
+          </div>
+          <div class="pomo-actions">
+            <button id="btn-pomo-start" class="pomo-btn" title="شروع">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M8 5v14l11-7z"></path></svg>
+            </button>
+            <button id="btn-pomo-reset" class="pomo-btn" title="بازنشانی">
+              <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path></svg>
+            </button>
+            <button id="btn-pomo-mode" class="pomo-btn" title="تغییر حالت">☕</button>
+          </div>
+        </div>
+        
+        <div class="planner-tasks-list" id="planner-tasks-list"></div>
+      </section>
+
+      <!-- Habit Tracker -->
+      <section class="planner-card glass-card habits-card">
+        <div class="card-header-with-action">
+          <h3>دفترچه عادت‌ها (ماهانه)</h3>
+          <button id="btn-add-habit" class="circle-action-btn" title="عادت جدید">+</button>
+        </div>
+        <div class="planner-task-form hidden" id="habit-form">
+          <input type="text" id="habit-input" placeholder="مثال: ورزش روزانه...">
+          <select id="habit-category">
+            <!-- Dynamically populated -->
+          </select>
+          <div class="form-actions">
+            <button id="btn-save-habit" class="notebook-save-btn">ذخیره عادت</button>
+            <button id="btn-cancel-habit" class="modal-cancel-btn">لغو</button>
+          </div>
+        </div>
+        <div class="habits-list" id="habits-list"></div>
+      </section>
+
+      <!-- Analytics & Daily Reflection -->
+      <section class="planner-card glass-card analytics-card">
+        <h3>گزارش بازدهی و عملکرد</h3>
+        <div class="analytics-top-row">
+          <div class="progress-ring-wrapper">
+            <svg class="progress-ring" width="120" height="120">
+              <circle class="progress-ring-bg" stroke="rgba(255, 255, 255, 0.05)" stroke-width="8" fill="transparent" r="50" cx="60" cy="60"/>
+              <circle id="planner-progress-circle" stroke="var(--accent-gold)" stroke-dasharray="314.15" stroke-dashoffset="314.15" stroke-width="8" stroke-linecap="round" fill="transparent" r="50" cx="60" cy="60"/>
+            </svg>
+            <div class="progress-ring-text">
+              <span id="planner-progress-percent">۰٪</span>
+              <span class="sub">انجام کل</span>
+            </div>
+          </div>
+          <div id="category-progress-list" class="category-progress-list">
+            <!-- Dynamically populated category progress bars -->
+          </div>
+        </div>
+        <div class="divider"></div>
+        <div class="daily-reflection-section">
+          <h4>یادداشت و تحلیل امروز</h4>
+          <textarea id="planner-reflection" placeholder="امروز چطور پیش رفت؟ چه درس‌هایی یاد گرفتید؟ یادداشت کنید..."></textarea>
+          <div class="reflection-footer">
+            <span id="reflection-save-status">خودکار ذخیره می‌شود</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Interactive Reports Card -->
+      <section class="glass-card interactive-reports-card" id="interactive-reports-card">
+        <div class="card-header-with-action">
+          <div class="header-title-group">
+            <h3>گزارش کار و تحلیلگر عملکرد هوشمند</h3>
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">روی روزهای تقویم بالا کلیک کنید تا وضعیت عملکرد آن روز را ببینید.</p>
+          </div>
+        </div>
+        <div class="reports-container">
+          <!-- Daily Details -->
+          <div class="daily-report-detail" id="daily-report-detail">
+            <h4 class="report-section-title" id="selected-report-date-title">گزارش روزانه: --</h4>
+            <div class="detail-grid">
+              <div class="detail-item">
+                <span class="detail-icon">📅</span>
+                <div class="detail-info">
+                  <span class="detail-label">کارهای چک‌لیست</span>
+                  <span class="detail-val" id="report-checklist-status">--</span>
+                </div>
+              </div>
+              <div class="detail-item">
+                <span class="detail-icon">📝</span>
+                <div class="detail-info">
+                  <span class="detail-label">کارهای برنامه‌ریزی</span>
+                  <span class="detail-val" id="report-planner-status">--</span>
+                </div>
+              </div>
+              <div class="detail-item">
+                <span class="detail-icon">🔄</span>
+                <div class="detail-info">
+                  <span class="detail-label">عادت‌های تیک‌خورده</span>
+                  <span class="detail-val" id="report-habits-status">--</span>
+                </div>
+              </div>
+              <div class="detail-item">
+                <span class="detail-icon">💧</span>
+                <div class="detail-info">
+                  <span class="detail-label">آب مصرفی</span>
+                  <span class="detail-val" id="report-water-status">--</span>
+                </div>
+              </div>
+            </div>
+            <div class="report-reflection-box">
+              <h5>تحلیل و یادداشت این روز:</h5>
+              <p id="report-reflection-text" style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.6; margin-top: 6px;">یادداشتی ثبت نشده است.</p>
+            </div>
+          </div>
+          
+          <div class="charts-visual-section">
+            <!-- Monthly Chart -->
+            <div class="chart-wrapper">
+              <div class="chart-header">
+                <h4>گزارش پیشرفت ماهانه (روزهای ماه)</h4>
+                <span id="chart-month-name" class="chart-sub">--</span>
+              </div>
+              <div class="bar-chart-container" id="monthly-bar-chart">
+                <!-- 30/31 columns generated dynamically -->
+              </div>
+            </div>
+            <!-- Yearly Chart -->
+            <div class="chart-wrapper">
+              <div class="chart-header">
+                <h4>گزارش سالانه (ماه‌های سال)</h4>
+                <span id="chart-year-name" class="chart-sub">--</span>
+              </div>
+              <div class="bar-chart-container" id="yearly-bar-chart">
+                <!-- 12 columns generated dynamically -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- Modal: Jalali Datepicker -->
+  <div id="checklist-datepicker-modal" class="modal-overlay hidden">
+    <div class="modal-card datepicker-modal-card">
+      <div class="modal-header">
+        <h4>انتخاب تاریخ مهلت (شمسی)</h4>
+        <button class="close-modal-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="datepicker-header">
+          <button type="button" class="dp-nav-btn" id="dp-prev-month">&gt;</button>
+          <span id="dp-month-year">خرداد ۱۴۰۵</span>
+          <button type="button" class="dp-nav-btn" id="dp-next-month">&lt;</button>
+        </div>
+        <div class="datepicker-weekdays">
+          <span>ش</span><span>ی</span><span>د</span><span>س</span><span>چ</span><span>پ</span><span>ج</span>
+        </div>
+        <div id="datepicker-days-grid" class="datepicker-days-grid"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="dp-btn-today" class="modal-submit-btn">امروز</button>
+        <button type="button" id="dp-btn-clear" class="modal-cancel-btn">حذف مهلت</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Category Manager -->
+  <div id="category-manager-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h4>مدیریت دسته‌بندی‌ها</h4>
+        <button class="close-modal-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="cat-manager-form">
+          <input type="text" id="new-cat-name" placeholder="نام دسته‌بندی جدید...">
+          <input type="text" id="new-cat-emoji" placeholder="ایموجی 🌟" maxlength="4" style="max-width: 60px; text-align: center;">
+          <input type="color" id="new-cat-color" value="#8b5cf6" title="رنگ">
+          <button id="btn-add-category" class="notebook-save-btn">افزودن</button>
+        </div>
+        <div id="categories-list" class="categories-list">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="modal-cancel-btn">بستن</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Add / Edit Shortcut -->
+  <div id="shortcut-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h4 id="shortcut-modal-title">افزودن میانبر جدید</h4>
+        <button class="close-modal-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>نوع میانبر</label>
+          <select id="shortcut-type-select">
+            <option value="link">پیوند معمولی</option>
+            <option value="folder">پوشه جدید</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="shortcut-name-input" id="shortcut-name-label">نام میانبر</label>
+          <input type="text" id="shortcut-name-input" placeholder="مثلاً: دیجی‌کالا">
+        </div>
+        <div class="form-group" id="shortcut-url-group">
+          <label for="shortcut-url-input">آدرس اینترنتی (URL)</label>
+          <input type="text" id="shortcut-url-input" placeholder="https://digikala.com" dir="ltr">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="btn-save-shortcut" class="modal-submit-btn">ذخیره میانبر</button>
+        <button class="modal-cancel-btn">انصراف</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Date Converter -->
+  <div id="converter-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h4>تبدیل تاریخ</h4>
+        <button class="close-modal-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="converter-tabs">
+          <button class="converter-tab-btn active" id="tab-g2j">میلادی به شمسی</button>
+          <button class="converter-tab-btn" id="tab-j2g">شمسی به میلادی</button>
+        </div>
+        
+        <!-- Gregorian to Jalali form -->
+        <div id="form-g2j" class="converter-form">
+          <div class="converter-inputs">
+            <div class="form-group">
+              <label>روز</label>
+              <input type="number" id="g-day" min="1" max="31" value="1">
+            </div>
+            <div class="form-group">
+              <label>ماه</label>
+              <select id="g-month">
+                <option value="1">January (1)</option>
+                <option value="2">February (2)</option>
+                <option value="3">March (3)</option>
+                <option value="4">April (4)</option>
+                <option value="5">May (5)</option>
+                <option value="6">June (6)</option>
+                <option value="7">July (7)</option>
+                <option value="8">August (8)</option>
+                <option value="9">September (9)</option>
+                <option value="10">October (10)</option>
+                <option value="11">November (11)</option>
+                <option value="12">December (12)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>سال</label>
+              <input type="number" id="g-year" min="1900" max="2100" value="2026">
+            </div>
+          </div>
+        </div>
+
+        <!-- Jalali to Gregorian form -->
+        <div id="form-j2g" class="converter-form hidden">
+          <div class="converter-inputs">
+            <div class="form-group">
+              <label>روز</label>
+              <input type="number" id="j-day" min="1" max="31" value="1">
+            </div>
+            <div class="form-group">
+              <label>ماه</label>
+              <select id="j-month">
+                <option value="1">فروردین (1)</option>
+                <option value="2">اردیبهشت (2)</option>
+                <option value="3">خرداد (3)</option>
+                <option value="4">تیر (4)</option>
+                <option value="5">مرداد (5)</option>
+                <option value="6">شهریور (6)</option>
+                <option value="7">مهر (7)</option>
+                <option value="8">آبان (8)</option>
+                <option value="9">آذر (9)</option>
+                <option value="10">دی (10)</option>
+                <option value="11">بهمن (11)</option>
+                <option value="12">اسفند (12)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>سال</label>
+              <input type="number" id="j-year" min="1300" max="1500" value="1405">
+            </div>
+          </div>
+        </div>
+        
+        <div class="converter-result-box">
+          <span class="result-label">نتیجه تبدیل:</span>
+          <div id="converter-result-text" class="result-text">منتظر ورودی...</div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="btn-convert" class="modal-submit-btn">تبدیل تاریخ</button>
+        <button class="modal-cancel-btn">بستن</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Settings -->
+  <div id="settings-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h4>تنظیمات داشبورد</h4>
+        <button class="close-modal-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>تصویر پس‌زمینه (تم)</label>
+          <div class="bg-choices">
+            <button class="bg-choice-btn active" data-bg="gradient-blue" style="background: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%);" title="گرادینت آبی ملایم"></button>
+            <button class="bg-choice-btn" data-bg="gradient-dark" style="background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);" title="گرادینت تیره"></button>
+            <button class="bg-choice-btn" data-bg="gradient-sunset" style="background: linear-gradient(135deg, #fbc2eb 0%, #a6c1ee 100%);" title="گرادینت غروب آفتاب"></button>
+            <button class="bg-choice-btn" data-bg="gradient-emerald" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);" title="گرادینت زمرد"></button>
+            <button class="bg-choice-btn" data-bg="gradient-purple" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);" title="گرادینت بنفش سلطنتی"></button>
+            <button class="bg-choice-btn" data-bg="gradient-auto" style="background: linear-gradient(135deg, #ffc3a0 0%, #ffafbd 100%); position: relative;" title="پوسته خودکار زمانی">
+              <span style="position: absolute; font-size: 0.55rem; color: #000; font-weight: bold; top: 50%; left: 50%; transform: translate(-50%, -50%);">AUTO</span>
+            </button>
+          </div>
+        </div>
+        <div class="form-group" style="margin-top: 16px;">
+          <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+            <input type="checkbox" id="settings-sound-checkbox" style="width: 16px; height: 16px; accent-color: var(--accent-gold);">
+            <span>فعال‌سازی افکت‌های صوتی ملایم (کلیک و موفقیت)</span>
+          </label>
+        </div>
+        <div class="form-group">
+          <label for="settings-city-input">شهر پیش‌فرض آب و هوا</label>
+          <input type="text" id="settings-city-input" value="تهران" placeholder="نام شهر به انگلیسی، مثلاً: Tehran">
+          <p class="form-help-text">اگر مجوز موقعیت مکانی داده نشود، آب و هوای این شهر نمایش داده خواهد شد.</p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="btn-save-settings" class="modal-submit-btn">ذخیره تنظیمات</button>
+        <button class="modal-cancel-btn">انصراف</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Prayer Times (اوقات شرعی) -->
+  <div id="prayer-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h4>اوقات شرعی امروز</h4>
+        <button class="close-modal-btn">&times;</button>
+      </div>
+      <div class="modal-body prayer-body">
+        <div class="prayer-time-item">
+          <span class="prayer-name">اذان صبح</span>
+          <span id="prayer-fajr" class="prayer-time">--:--</span>
+        </div>
+        <div class="prayer-time-item">
+          <span class="prayer-name">طلوع آفتاب</span>
+          <span id="prayer-sunrise" class="prayer-time">--:--</span>
+        </div>
+        <div class="prayer-time-item">
+          <span class="prayer-name">اذان ظهر</span>
+          <span id="prayer-dhuhr" class="prayer-time">--:--</span>
+        </div>
+        <div class="prayer-time-item">
+          <span class="prayer-name">غروب آفتاب</span>
+          <span id="prayer-sunset" class="prayer-time">--:--</span>
+        </div>
+        <div class="prayer-time-item">
+          <span class="prayer-name">اذان مغرب</span>
+          <span id="prayer-maghrib" class="prayer-time">--:--</span>
+        </div>
+        <div class="prayer-time-item">
+          <span class="prayer-name">نیمه شب شرعی</span>
+          <span id="prayer-midnight" class="prayer-time">--:--</span>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="modal-cancel-btn modal-submit-btn">بستن</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Timer (تایمر) -->
+  <div id="timer-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h4>تایمر معکوس / تمرکز</h4>
+        <button class="close-modal-btn">&times;</button>
+      </div>
+      <div class="modal-body timer-body">
+        <div class="timer-display" id="timer-display-val">25:00</div>
+        
+        <div class="timer-setup">
+          <button class="timer-preset-btn" data-minutes="10">۱۰ دقیقه</button>
+          <button class="timer-preset-btn active" data-minutes="25">۲۵ دقیقه (پومودورو)</button>
+          <button class="timer-preset-btn" data-minutes="50">۵۰ دقیقه</button>
+        </div>
+
+        <div class="timer-controls">
+          <button id="btn-timer-start" class="timer-control-btn primary">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+            <span>شروع</span>
+          </button>
+          <button id="btn-timer-pause" class="timer-control-btn hidden">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="5" x2="18" y2="19"></line><line x1="6" y1="5" x2="6" y2="19"></line></svg>
+            <span>توقف</span>
+          </button>
+          <button id="btn-timer-reset" class="timer-control-btn">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path></svg>
+            <span>بازنشانی</span>
+          </button>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="modal-cancel-btn">بستن</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sidebar Panel: AI Assistant -->
+  <div id="panel-ai" class="sidebar-panel">
+    <div class="panel-header">
+      <h4>دستیار هوشمند AI</h4>
+      <button class="close-panel-btn" id="close-panel-ai">&times;</button>
+    </div>
+    <div class="panel-body ai-panel-body">
+      <div class="chat-messages" id="chat-messages">
+        <div class="chat-bubble ai">سلام! من دستیار هوشمند شما هستم. چطور می‌توانم کمکتان کنم؟</div>
+      </div>
+      <div class="chat-suggestions">
+        <button class="chat-suggest-btn" data-prompt="یک شعر کوتاه انگیزشی بگو">شعر انگیزشی 🌟</button>
+        <button class="chat-suggest-btn" data-prompt="چطور برنامه‌ریزی روزانه موثری داشته باشم؟">برنامه‌ریزی روزانه 📅</button>
+        <button class="chat-suggest-btn" data-prompt="یک ایده پروژه جالب برای وب بگو">ایده پروژه وب 💻</button>
+      </div>
+      <div class="chat-input-wrapper">
+        <input type="text" id="chat-input" placeholder="سوالی بپرسید..." autocomplete="off">
+        <button id="btn-chat-send" aria-label="ارسال">
+          <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sidebar Panel: Apps (Idea Bank) -->
+  <div id="panel-apps" class="sidebar-panel">
+    <div class="panel-header">
+      <h4>بانک ایده‌های خلاقانه (۵۰ ایده)</h4>
+      <button class="close-panel-btn" id="close-panel-apps">&times;</button>
+    </div>
+    <div class="panel-body apps-panel-body">
+      <div class="idea-search-wrapper">
+        <input type="text" id="idea-search-input" placeholder="جستجو در بین ایده‌ها..." autocomplete="off">
+      </div>
+      <div class="idea-tabs">
+        <button class="idea-tab-btn active" data-category="all">همه</button>
+        <button class="idea-tab-btn" data-category="startup">استارتاپ</button>
+        <button class="idea-tab-btn" data-category="coding">کدنویسی</button>
+        <button class="idea-tab-btn" data-category="self">توسعه فردی</button>
+        <button class="idea-tab-btn" data-category="creative">خلاقیت</button>
+      </div>
+      <div id="ideas-list-container" class="ideas-list-container">
+        <!-- Dynamically populated 50 ideas list -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Note Version History -->
+  <div id="history-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h4>تاریخچه تغییرات یادداشت</h4>
+        <button class="close-modal-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="history-versions-list" class="history-versions-list">
+          <!-- Versions dynamic list -->
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="modal-cancel-btn">بستن</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Folder Shortcuts -->
+  <div id="folder-shortcuts-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h4 id="folder-shortcuts-modal-title">پوشه میانبر</h4>
+        <button class="close-modal-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="folder-shortcuts-grid" class="shortcuts-grid">
+          <!-- Shortcuts inside the folder -->
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="btn-folder-add-shortcut" class="modal-submit-btn">افزودن به پوشه</button>
+        <button class="modal-cancel-btn">بستن</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Include Javascript files -->
+  <script src="calendar.js"></script>
+  <script src="weather.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
