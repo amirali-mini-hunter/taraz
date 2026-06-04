@@ -1521,6 +1521,14 @@ function setupSidebarPanels() {
     return !/(\/edit\b|\/edit$|\/upscale\/|birefnet|ben\/v2|^tts-|gpt-4o-mini-tts|whisper|text-embedding-|veo|sora|imagen|flux|recraft|seedream|nano-banana|aura-sr|topaz|stable-diffusion|kling|wan-|ideogram|photon|fal-ai\/)/i.test(id);
   }
 
+  // Gemini models must be sent to the completions endpoint with the "gemini/" provider
+  // prefix (gpt-* and claude-* work bare). getModels sometimes lists them without it.
+  function normalizeModelId(id) {
+    if (!id || id.includes("/")) return id;
+    if (/^gemini[-_]/i.test(id)) return "gemini/" + id;
+    return id;
+  }
+
   // Friendly label for a raw model id (strip provider prefix, prettify).
   function prettyModelName(id) {
     const bare = id.split("/").pop();
@@ -1556,7 +1564,7 @@ function setupSidebarPanels() {
       modelSelect.innerHTML = "";
       chatIds.forEach(id => {
         const opt = document.createElement("option");
-        opt.value = id;
+        opt.value = normalizeModelId(id);
         opt.textContent = prettyModelName(id);
         modelSelect.appendChild(opt);
       });
@@ -1601,6 +1609,7 @@ function setupSidebarPanels() {
                || ids[0]
                || "gemini/gemini-2.5-flash-lite";
       }
+      modelId = normalizeModelId(modelId);
 
       const requestOnce = (model) => AiPass.generateCompletion({
         messages: [
@@ -1616,7 +1625,7 @@ function setupSidebarPanels() {
         completion = await requestOnce(modelId);
       } catch (err) {
         // Model rejected (e.g. 400/not available) — retry once with a safe default.
-        const fallback = ids.find(id => id.includes("gemini-2.5-flash-lite")) || ids.find(isChatModelId);
+        const fallback = normalizeModelId(ids.find(id => id.includes("gemini-2.5-flash-lite")) || ids.find(isChatModelId));
         if (/400|not found|not available|invalid/i.test(err?.message || "") && fallback && fallback !== modelId) {
           addMessage(`مدل انتخاب‌شده در دسترس نبود؛ از ${prettyModelName(fallback)} استفاده می‌کنم.`, "ai");
           completion = await requestOnce(fallback);
