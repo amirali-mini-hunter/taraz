@@ -396,11 +396,65 @@ function renderShortcuts() {
   const addBtn = document.getElementById("btn-add-shortcut");
   grid.innerHTML = "";
   
+  // Set up dragover and drop handlers on the main grid container to allow dragging OUT of folders
+  grid.addEventListener("dragover", (e) => {
+    e.preventDefault();
+  });
+  
+  grid.addEventListener("drop", async (e) => {
+    // Only handle if dropped on the empty space of the grid itself
+    if (e.target === grid || e.target.id === "shortcuts-grid") {
+      e.preventDefault();
+      const draggedId = e.dataTransfer.getData("text/plain");
+      if (!draggedId) return;
+
+      let draggedShortcut = null;
+      let draggedFromFolderId = null;
+
+      // Find in folders
+      for (const s of shortcuts) {
+        if (s.isFolder && s.shortcuts) {
+          const idx = s.shortcuts.findIndex(c => c.id === draggedId);
+          if (idx !== -1) {
+            draggedShortcut = s.shortcuts[idx];
+            draggedFromFolderId = s.id;
+            break;
+          }
+        }
+      }
+
+      if (draggedShortcut && draggedFromFolderId) {
+        // Remove from the source folder
+        shortcuts = shortcuts.map(s => {
+          if (s.id === draggedFromFolderId) {
+            return { ...s, shortcuts: (s.shortcuts || []).filter(c => c.id !== draggedId) };
+          }
+          return s;
+        });
+
+        // Add to main shortcuts list
+        shortcuts.push(draggedShortcut);
+
+        await db.set("user_shortcuts", shortcuts);
+        renderShortcuts();
+
+        // Refresh folder modal grid
+        const folder = shortcuts.find(s => s.id === draggedFromFolderId);
+        if (folder) {
+          renderFolderGrid(folder);
+        } else {
+          closeModal("folder-shortcuts-modal");
+        }
+      }
+    }
+  });
+  
   shortcuts.forEach(shortcut => {
     const item = document.createElement("a");
     item.href = isEditMode ? "#" : (shortcut.isFolder ? "#" : shortcut.url);
     item.className = "shortcut-item";
     item.setAttribute("data-id", shortcut.id);
+    item.setAttribute("draggable", "true"); // Make shortcuts draggable
     if (!isEditMode && !shortcut.isFolder) {
       item.target = "_blank";
     }
@@ -433,6 +487,121 @@ function renderShortcuts() {
         <div class="delete-badge" data-id="${shortcut.id}">&times;</div>
       `;
     }
+
+    // Drag and Drop listeners
+    item.addEventListener("dragstart", (e) => {
+      e.dataTransfer.setData("text/plain", shortcut.id);
+      item.classList.add("dragging");
+      e.dataTransfer.effectAllowed = "move";
+    });
+
+    item.addEventListener("dragend", () => {
+      item.classList.remove("dragging");
+      document.querySelectorAll(".shortcut-item").forEach(el => {
+        el.classList.remove("drag-over", "drag-folder-target");
+      });
+    });
+
+    item.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      const draggedEl = document.querySelector(".shortcut-item.dragging") || document.querySelector("#folder-shortcuts-grid .shortcut-item.dragging");
+      if (draggedEl && draggedEl !== item) {
+        if (shortcut.isFolder) {
+          // If dragged item is not a folder, show target highlight
+          const draggedId = draggedEl.getAttribute("data-id");
+          const draggedObj = shortcuts.find(s => s.id === draggedId);
+          if (!draggedObj || !draggedObj.isFolder) {
+            item.classList.add("drag-folder-target");
+          }
+        } else {
+          item.classList.add("drag-over");
+        }
+      }
+    });
+
+    item.addEventListener("dragleave", () => {
+      item.classList.remove("drag-over", "drag-folder-target");
+    });
+
+    item.addEventListener("drop", async (e) => {
+      e.preventDefault();
+      const draggedId = e.dataTransfer.getData("text/plain");
+      if (draggedId === shortcut.id) return;
+
+      let draggedShortcut = null;
+      let draggedFromFolderId = null;
+      let draggedIndex = -1;
+
+      // 1. Search main list
+      draggedIndex = shortcuts.findIndex(s => s.id === draggedId);
+      if (draggedIndex !== -1) {
+        draggedShortcut = shortcuts[draggedIndex];
+      } else {
+        // 2. Search inside folders
+        for (const s of shortcuts) {
+          if (s.isFolder && s.shortcuts) {
+            const idx = s.shortcuts.findIndex(c => c.id === draggedId);
+            if (idx !== -1) {
+              draggedShortcut = s.shortcuts[idx];
+              draggedFromFolderId = s.id;
+              draggedIndex = idx;
+              break;
+            }
+          }
+        }
+      }
+
+      if (!draggedShortcut) return;
+
+      // If dragged from a folder, remove it from that folder
+      if (draggedFromFolderId) {
+        shortcuts = shortcuts.map(s => {
+          if (s.id === draggedFromFolderId) {
+            return { ...s, shortcuts: (s.shortcuts || []).filter(c => c.id !== draggedId) };
+          }
+          return s;
+        });
+      }
+
+      // If target is a folder, move it inside (only if dragged is not a folder)
+      if (shortcut.isFolder && !draggedShortcut.isFolder) {
+        shortcuts = shortcuts.map(s => {
+          if (s.id === shortcut.id) {
+            const folderChildren = s.shortcuts || [];
+            if (!folderChildren.some(c => c.id === draggedId)) {
+              return { ...s, shortcuts: [...folderChildren, draggedShortcut] };
+            }
+          }
+          return s;
+        });
+        // Remove from main list if it was there
+        if (!draggedFromFolderId) {
+          shortcuts = shortcuts.filter(s => s.id !== draggedId);
+        }
+      } else {
+        // Standard reordering: swap positions in main list
+        const targetIndex = shortcuts.findIndex(s => s.id === shortcut.id);
+        if (targetIndex !== -1) {
+          if (!draggedFromFolderId) {
+            shortcuts.splice(draggedIndex, 1);
+          }
+          shortcuts.splice(targetIndex, 0, draggedShortcut);
+        }
+      }
+
+      await db.set("user_shortcuts", shortcuts);
+      renderShortcuts();
+
+      // Refresh folder modal grid if dragged from a folder
+      if (draggedFromFolderId) {
+        const folder = shortcuts.find(s => s.id === draggedFromFolderId);
+        if (folder) {
+          renderFolderGrid(folder);
+        } else {
+          closeModal("folder-shortcuts-modal");
+        }
+      }
+    });
 
     // Handle delete badge click
     item.querySelector(".delete-badge").addEventListener("click", async (e) => {
@@ -615,6 +784,22 @@ async function initScratchpad() {
       titleInput.value = activeNote.title || "";
       textarea.value = activeNote.content || "";
       
+      // Reset preview state back to Edit mode
+      const noteTextarea = document.getElementById("notebook-textarea");
+      const notePreview = document.getElementById("notebook-preview");
+      const previewToggleBtn = document.getElementById("btn-notebook-preview-toggle");
+      const editorBody = document.querySelector(".notebook-editor-body");
+      if (noteTextarea && notePreview && previewToggleBtn && editorBody) {
+        noteTextarea.classList.remove("hidden");
+        notePreview.classList.remove("hidden");
+        editorBody.classList.remove("split-active", "preview-active");
+        editorBody.classList.add("edit-active");
+        editorBody.dataset.mode = "edit";
+        previewToggleBtn.innerText = "👁️ پیش‌نمایش";
+        previewToggleBtn.classList.remove("active");
+        previewToggleBtn.style.background = "";
+      }
+      
       // Update metadata labels in editor
       const metaCreated = document.getElementById("notebook-meta-created");
       const metaUpdated = document.getElementById("notebook-meta-updated");
@@ -649,6 +834,30 @@ async function initScratchpad() {
 
   async function saveNotesToStorage() {
     saveCurrentNoteData();
+    
+    // Taraz Agent Hooks
+    if (window.tarazAgents) {
+      const activeNote = notebookNotes.find(n => n.id === currentNoteId);
+      if (activeNote && activeNote.content) {
+        // 1. Fix half-spaces
+        const fixed = window.tarazAgents.fixHalfSpaces(activeNote.content);
+        if (fixed !== activeNote.content) {
+          activeNote.content = fixed;
+          const txtArea = document.getElementById("notebook-textarea");
+          if (txtArea) txtArea.value = fixed;
+        }
+        // 2. Local tagging
+        const localTags = window.tarazAgents.tagNoteLocally(activeNote.content);
+        activeNote.tags = localTags;
+        // 3. Security watchdog
+        window.tarazAgents.checkSecurityLeaking(activeNote.content);
+        // 4. Expense extractor
+        window.tarazAgents.checkExpenseExtraction(activeNote.content);
+        // 5. Mood / Poem matching
+        window.tarazAgents.analyzeMoodAndSelectPoem(activeNote.content);
+      }
+    }
+
     await db.set("notebook_notes", notebookNotes);
     showSaveIndicator();
     renderNotesList();
@@ -2159,6 +2368,43 @@ function renderFolderGrid(folder) {
   const grid = document.getElementById("folder-shortcuts-grid");
   grid.innerHTML = "";
   
+  // Drag over and drop listeners on the folder grid container to allow dragging into the folder modal
+  grid.addEventListener("dragover", (e) => {
+    e.preventDefault();
+  });
+  
+  grid.addEventListener("drop", async (e) => {
+    if (e.target === grid || e.target.id === "folder-shortcuts-grid") {
+      e.preventDefault();
+      const draggedId = e.dataTransfer.getData("text/plain");
+      if (!draggedId) return;
+
+      const draggedIndex = shortcuts.findIndex(s => s.id === draggedId);
+      if (draggedIndex !== -1) {
+        const draggedShortcut = shortcuts[draggedIndex];
+        if (!draggedShortcut.isFolder) {
+          // Remove from main list
+          shortcuts.splice(draggedIndex, 1);
+          // Add to current folder
+          shortcuts = shortcuts.map(s => {
+            if (s.id === folder.id) {
+              const children = s.shortcuts || [];
+              if (!children.some(c => c.id === draggedId)) {
+                return { ...s, shortcuts: [...children, draggedShortcut] };
+              }
+            }
+            return s;
+          });
+
+          await db.set("user_shortcuts", shortcuts);
+          renderShortcuts();
+          const updatedFolder = shortcuts.find(s => s.id === folder.id);
+          if (updatedFolder) renderFolderGrid(updatedFolder);
+        }
+      }
+    }
+  });
+  
   const childShortcuts = folder.shortcuts || [];
   if (childShortcuts.length === 0) {
     grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; font-size: 0.8rem; color: var(--text-muted); padding: 20px 0;">پوشه خالی است. با استفاده از دکمه زیر میانبر اضافه کنید.</div>`;
@@ -2168,6 +2414,7 @@ function renderFolderGrid(folder) {
       item.href = isEditMode ? "#" : child.url;
       item.className = "shortcut-item";
       item.setAttribute("data-id", child.id);
+      item.setAttribute("draggable", "true"); // Make child shortcuts draggable
       if (!isEditMode) {
         item.target = "_blank";
       }
@@ -2184,6 +2431,54 @@ function renderFolderGrid(folder) {
         <span class="shortcut-title">${child.title}</span>
         <div class="delete-badge" data-id="${child.id}">&times;</div>
       `;
+
+      // Drag and Drop listeners inside folder modal
+      item.addEventListener("dragstart", (e) => {
+        e.dataTransfer.setData("text/plain", child.id);
+        item.classList.add("dragging");
+        e.dataTransfer.effectAllowed = "move";
+      });
+
+      item.addEventListener("dragend", () => {
+        item.classList.remove("dragging");
+        grid.querySelectorAll(".shortcut-item").forEach(el => el.classList.remove("drag-over"));
+      });
+
+      item.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        const draggedEl = document.querySelector(".shortcut-item.dragging") || grid.querySelector(".shortcut-item.dragging");
+        if (draggedEl && draggedEl !== item) {
+          item.classList.add("drag-over");
+        }
+      });
+
+      item.addEventListener("dragleave", () => {
+        item.classList.remove("drag-over");
+      });
+
+      item.addEventListener("drop", async (e) => {
+        e.preventDefault();
+        const draggedId = e.dataTransfer.getData("text/plain");
+        if (draggedId === child.id) return;
+
+        // Reorder inside folder
+        const folderIndex = shortcuts.findIndex(s => s.id === folder.id);
+        if (folderIndex !== -1) {
+          const children = [...(shortcuts[folderIndex].shortcuts || [])];
+          const draggedIdx = children.findIndex(c => c.id === draggedId);
+          const targetIdx = children.findIndex(c => c.id === child.id);
+          
+          if (draggedIdx !== -1 && targetIdx !== -1) {
+            const [dragged] = children.splice(draggedIdx, 1);
+            children.splice(targetIdx, 0, dragged);
+            
+            shortcuts[folderIndex].shortcuts = children;
+            await db.set("user_shortcuts", shortcuts);
+            renderShortcuts();
+            renderFolderGrid(shortcuts[folderIndex]);
+          }
+        }
+      });
       
       item.querySelector(".delete-badge").addEventListener("click", async (e) => {
         e.stopPropagation();
@@ -3258,11 +3553,7 @@ function renderCategoryManagerList() {
     const item = document.createElement("div");
     item.className = "cat-item";
     
-    // Protect default categories from deletion
-    const isDefault = DEFAULT_CATEGORIES.some(dc => dc.id === cat.id);
-    const deleteBtnMarkup = isDefault ? 
-      `<span class="cat-default-badge">پیش‌فرض</span>` :
-      `<button class="cat-delete-btn" data-id="${cat.id}">&times;</button>`;
+    const deleteBtnMarkup = `<button class="cat-delete-btn" data-id="${cat.id}">&times;</button>`;
       
     item.innerHTML = `
       <div class="cat-color-preview" style="background: ${cat.color || '#fff'}"></div>
@@ -3271,18 +3562,16 @@ function renderCategoryManagerList() {
       ${deleteBtnMarkup}
     `;
     
-    if (!isDefault) {
-      item.querySelector(".cat-delete-btn").addEventListener("click", async () => {
-        plannerCategories = plannerCategories.filter(c => c.id !== cat.id);
-        await db.set("planner_categories", plannerCategories);
-        renderCategoryManagerList();
-        populateCategoryDropdowns();
-        if (window.renderPlannerReports) window.renderPlannerReports();
-        if (window.renderPlannerTasks) window.renderPlannerTasks();
-        if (window.renderHabits) window.renderHabits();
-        updateInteractiveAnalytics(selectedCalYear, selectedCalMonth, selectedCalDay);
-      });
-    }
+    item.querySelector(".cat-delete-btn").addEventListener("click", async () => {
+      plannerCategories = plannerCategories.filter(c => c.id !== cat.id);
+      await db.set("planner_categories", plannerCategories);
+      renderCategoryManagerList();
+      populateCategoryDropdowns();
+      if (window.renderPlannerReports) window.renderPlannerReports();
+      if (window.renderPlannerTasks) window.renderPlannerTasks();
+      if (window.renderHabits) window.renderHabits();
+      updateInteractiveAnalytics(selectedCalYear, selectedCalMonth, selectedCalDay);
+    });
     
     listEl.appendChild(item);
   });

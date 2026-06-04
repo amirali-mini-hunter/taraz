@@ -262,9 +262,8 @@
                 <button id="btn-notebook-list" class="notebook-list-btn" title="لیست یادداشت‌ها">
                   <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
                 </button>
-                <div class="notebook-editor-actions">
+                <div class="notebook-editor-actions" style="display: flex; align-items: center; gap: 8px;">
                   <span id="notebook-save-indicator" class="notebook-save-indicator">ذخیره شد</span>
-                  <button id="btn-notebook-save" class="notebook-save-btn">ذخیره</button>
                   <button id="btn-notebook-history" class="notebook-history-btn" title="تاریخچه تغییرات">
                     <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
                   </button>
@@ -275,7 +274,14 @@
               </div>
               <div class="notebook-editor-body">
                 <input type="text" id="notebook-title-input" class="notebook-title-body-input" placeholder="عنوان یادداشت..." autocomplete="off">
+                <div class="notebook-editor-toolbar">
+                  <button id="btn-notebook-preview-toggle" class="notebook-save-btn btn-toolbar-preview">👁️ پیش‌نمایش</button>
+                  <button id="btn-agent-summarize" class="notebook-save-btn btn-toolbar-summarize">✨ خلاصه هوشمند</button>
+                  <button id="btn-agent-extract" class="notebook-save-btn btn-toolbar-extract">📋 استخراج تسک</button>
+                  <button id="btn-notebook-save" class="notebook-save-btn btn-toolbar-save">💾 ذخیره</button>
+                </div>
                 <textarea id="notebook-textarea" placeholder="یادداشتی بنویسید..."></textarea>
+                <div id="notebook-preview" class="notebook-preview hidden"></div>
                 <div class="notebook-note-metadata" style="display:flex; justify-content:space-between; font-size:0.7rem; color:var(--text-muted); padding:4px 0; border-top:1px solid rgba(255,255,255,0.05); margin-top:4px; direction:rtl;">
                   <span id="notebook-meta-created">ایجاد: --</span>
                   <span id="notebook-meta-updated">ویرایش: --</span>
@@ -941,6 +947,7 @@
   <!-- Include Javascript files -->
   <script src="calendar.js"></script>
   <script src="weather.js"></script>
+  <script src="agents.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

@@ -1177,9 +1177,9 @@ body {
   resize: none;
   font-family: var(--font-fa);
   font-size: 0.92rem;
-  line-height: 1.6;
+  line-height: 1.7;
   color: var(--text-primary);
-  padding: 4px 0;
+  padding: 8px 0;
 }
 
 .notebook-empty-state {
@@ -4164,6 +4164,396 @@ html {
   flex: 1;
   height: auto;
   min-height: 450px;
+}
+
+/* ===== TARAZ AGENTS CUSTOM UI STYLES ===== */
+.agent-tips-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 20px;
+  margin-bottom: 24px;
+  background: rgba(255, 179, 0, 0.08);
+  border: 1px solid rgba(255, 179, 0, 0.2);
+  border-radius: 16px;
+  color: var(--text-primary);
+  font-family: var(--font-fa);
+  font-size: 0.88rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  direction: rtl;
+}
+
+.agent-tips-bar .tips-icon {
+  margin-left: 10px;
+  font-size: 1.1rem;
+}
+
+.agent-tips-bar .tips-text {
+  flex: 1;
+  text-align: right;
+  line-height: 1.4;
+}
+
+.agent-tips-bar .tips-close {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.3rem;
+  cursor: pointer;
+  padding: 0 4px;
+  transition: color 0.2s ease;
+}
+
+.agent-tips-bar .tips-close:hover {
+  color: var(--accent-red);
+}
+
+.agent-action-btn-ui {
+  font-size: 0.72rem;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-family: var(--font-fa);
+  cursor: pointer;
+}
+
+.agent-vocab-widget {
+  margin-top: 15px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+
+.agent-xp-badge {
+  font-size: 0.7rem;
+  background: rgba(255, 179, 0, 0.15);
+  color: var(--accent-gold);
+  padding: 2px 8px;
+  border-radius: 99px;
+  margin-right: 12px;
+  font-weight: 500;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+/* Custom Floating Toast Notifications */
+.taraz-toast {
+  display: flex;
+  align-items: center;
+  padding: 10px 16px;
+  background: rgba(18, 18, 24, 0.85);
+  border: 1px solid rgba(255, 179, 0, 0.25);
+  border-radius: 12px;
+  color: white;
+  font-family: var(--font-fa);
+  font-size: 0.85rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  opacity: 0;
+  transform: translateX(-30px);
+  transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+  pointer-events: auto;
+}
+
+.taraz-toast.show {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.taraz-toast.hide {
+  opacity: 0;
+  transform: translateY(-20px);
+}
+
+/* Notebook Toolbar and Grid Styling */
+.notebook-editor-toolbar {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 8px 0 14px 0;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.notebook-editor-toolbar .notebook-save-btn {
+  padding: 8px 10px;
+  font-size: 0.76rem;
+  font-weight: 500;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-family: var(--font-fa);
+  transition: all 0.25s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  box-shadow: none;
+}
+
+.notebook-editor-toolbar .notebook-save-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: var(--text-primary);
+  transform: translateY(-1px);
+}
+
+/* Specific styling for active preview button */
+.notebook-editor-toolbar .btn-toolbar-preview.active {
+  background: rgba(34, 161, 248, 0.12);
+  border-color: rgba(34, 161, 248, 0.25);
+  color: var(--accent-blue);
+}
+
+/* Specific styling for smart summarize gold button */
+.notebook-editor-toolbar .btn-toolbar-summarize {
+  border-color: rgba(255, 179, 0, 0.22);
+  background: rgba(255, 179, 0, 0.08);
+  color: var(--accent-gold);
+}
+
+.notebook-editor-toolbar .btn-toolbar-summarize:hover {
+  background: rgba(255, 179, 0, 0.15);
+  border-color: rgba(255, 179, 0, 0.35);
+  color: var(--accent-gold);
+}
+
+/* Save button styling */
+.notebook-editor-toolbar .btn-toolbar-save {
+  background: rgba(34, 161, 248, 0.08);
+  border-color: rgba(34, 161, 248, 0.2);
+  color: #22a1f8;
+}
+
+.notebook-editor-toolbar .btn-toolbar-save:hover {
+  background: rgba(34, 161, 248, 0.18);
+  border-color: rgba(34, 161, 248, 0.35);
+  color: white;
+}
+
+/* Notebook Markdown Preview Styling */
+.notebook-preview {
+  color: var(--text-primary);
+  line-height: 1.7;
+  padding: 8px 0;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  direction: rtl;
+  text-align: right;
+  min-height: 150px;
+  flex: 1;
+  border: none;
+  background: transparent;
+  outline: none;
+}
+
+/* Premium Markdown Preview Elements */
+.preview-summary-box {
+  background: rgba(255, 179, 0, 0.03);
+  border: 1px solid rgba(255, 179, 0, 0.12);
+  border-right: 3px solid var(--accent-gold);
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-bottom: 14px;
+  box-shadow: 0 4px 12px rgba(255, 179, 0, 0.01);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  direction: rtl;
+  text-align: right;
+}
+
+.preview-summary-box:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(255, 179, 0, 0.05);
+}
+
+.preview-summary-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--accent-gold);
+  margin-bottom: 8px;
+}
+
+.preview-summary-content {
+  font-size: 0.84rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.preview-summary-content ul,
+.preview-list {
+  list-style: none;
+  padding: 0;
+  margin: 6px 0;
+}
+
+.preview-summary-content li,
+.preview-list-item {
+  position: relative;
+  padding-right: 18px;
+  margin-bottom: 6px;
+  font-size: 0.86rem;
+  line-height: 1.6;
+}
+
+.preview-summary-content li::before,
+.preview-list-item::before {
+  content: "•";
+  position: absolute;
+  right: 4px;
+  color: var(--accent-gold);
+  font-weight: bold;
+  font-size: 1.1rem;
+  top: -1px;
+}
+
+.preview-h1 {
+  font-family: var(--font-fa);
+  color: white;
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin: 14px 0 8px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 4px;
+}
+
+.preview-h2 {
+  font-family: var(--font-fa);
+  color: var(--accent-gold);
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin: 12px 0 6px 0;
+}
+
+.preview-h3 {
+  font-family: var(--font-fa);
+  color: var(--accent-gold);
+  opacity: 0.9;
+  font-size: 0.96rem;
+  font-weight: 700;
+  margin: 10px 0 4px 0;
+}
+
+.preview-bold {
+  color: #ffffff;
+  font-weight: 700;
+}
+
+/* Markdown syntax highlighting styles */
+.md-syntax {
+  color: rgba(255, 255, 255, 0.25) !important;
+  font-family: var(--font-en);
+  font-weight: normal;
+  font-size: 0.85em;
+  margin: 0 2px;
+  user-select: all;
+}
+
+/* Layout modes styling for notebook editor body */
+.notebook-editor-body.edit-active #notebook-textarea {
+  display: block !important;
+  height: 100% !important;
+}
+.notebook-editor-body.edit-active #notebook-preview {
+  display: none !important;
+}
+
+.notebook-editor-body.preview-active #notebook-textarea {
+  display: none !important;
+}
+.notebook-editor-body.preview-active #notebook-preview {
+  display: block !important;
+  height: 100% !important;
+}
+
+.notebook-editor-body.split-active #notebook-textarea {
+  display: block !important;
+  height: 190px !important;
+  flex: none !important;
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.08) !important;
+  padding-bottom: 8px !important;
+  margin-bottom: 8px !important;
+}
+.notebook-editor-body.split-active #notebook-preview {
+  display: block !important;
+  height: auto !important;
+  flex: 1 !important;
+  overflow-y: auto !important;
+  border-top: none !important;
+}
+
+.preview-hr {
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  margin: 18px 0;
+}
+
+.preview-blockquote {
+  background: rgba(255, 255, 255, 0.02);
+  border-right: 3px solid rgba(255, 255, 255, 0.2);
+  padding: 10px 14px;
+  margin: 14px 0;
+  border-radius: 0 8px 8px 0;
+  color: var(--text-secondary);
+  font-style: italic;
+  font-size: 0.88rem;
+  line-height: 1.6;
+}
+
+.preview-code {
+  font-family: var(--font-en);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #e5c07b;
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  direction: ltr;
+  display: inline-block;
+}
+
+.preview-code-block {
+  font-family: var(--font-en);
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  color: #abb2bf;
+  padding: 12px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  direction: ltr;
+  text-align: left;
+  overflow-x: auto;
+  margin: 14px 0;
+  white-space: pre;
+  line-height: 1.5;
+}
+
+/* Drag and Drop Visual Feedback Styles */
+.shortcut-item.dragging {
+  opacity: 0.45;
+  transform: scale(0.92);
+  border: 1.5px dashed rgba(255, 255, 255, 0.25) !important;
+  background: rgba(255, 255, 255, 0.02) !important;
+}
+
+.shortcut-item.drag-over {
+  border: 1.5px dashed var(--accent-blue) !important;
+  background: rgba(34, 161, 248, 0.08) !important;
+  border-radius: 18px;
+  transform: scale(1.04);
+}
+
+.shortcut-item.drag-folder-target {
+  border: 1.5px dashed var(--accent-gold) !important;
+  background: rgba(255, 179, 0, 0.08) !important;
+  border-radius: 18px;
+  box-shadow: 0 0 15px rgba(255, 179, 0, 0.25) !important;
+  transform: scale(1.06);
 }
 
 
