@@ -998,9 +998,9 @@ function initGreetingPoem() {
   let greeting = "سلام، وقت بخیر";
   if (hour >= 5 && hour < 12) {
     greeting = "سلام، صبح بخیر ☀️";
-  } else if (hour >= 12 && hour < 17) {
+  } else if (hour >= 12 && hour < 16) {
     greeting = "سلام، ظهر بخیر 🌤️";
-  } else if (hour >= 17 && hour < 20) {
+  } else if (hour >= 16 && hour < 19) {
     greeting = "سلام، عصر بخیر 🌅";
   } else {
     greeting = "سلام، شب بخیر 🌙";
@@ -1035,7 +1035,9 @@ async function initWaterTracker() {
   function updateWaterUI(count) {
     const goal = 8;
     const progressText = document.getElementById("water-progress-text");
-    progressText.innerText = `${toPersianDigits(count)} / ${toPersianDigits(goal)} لیوان`;
+    if (progressText) {
+      progressText.innerHTML = `<span class="ltr-text">${toPersianDigits(count)} / ${toPersianDigits(goal)}</span> لیوان`;
+    }
     
     const circle = document.getElementById("water-progress-ring-circle");
     if (circle) {
@@ -1824,14 +1826,14 @@ async function initChecklist() {
 
       let overdueMarkup = "";
       if (item.dueDate && !item.completed) {
-        const due = new Date(item.dueDate);
+        const due = parseLocalDate(item.dueDate);
         if (today > due) {
-          overdueMarkup = `<span class="checklist-item-date-due overdue">منقضی شده! (مهلت: ${toPersianDateString(due)})</span>`;
+          overdueMarkup = `<span class="checklist-item-date-due overdue">منقضی شده! (مهلت: <span class="ltr-text">${toPersianDateString(due)}</span>)</span>`;
         } else {
-          overdueMarkup = `<span class="checklist-item-date-due">مهلت: ${toPersianDateString(due)}</span>`;
+          overdueMarkup = `<span class="checklist-item-date-due">مهلت: <span class="ltr-text">${toPersianDateString(due)}</span></span>`;
         }
       } else if (item.dueDate) {
-        overdueMarkup = `<span class="checklist-item-date-due">مهلت: ${toPersianDateString(new Date(item.dueDate))}</span>`;
+        overdueMarkup = `<span class="checklist-item-date-due">مهلت: <span class="ltr-text">${toPersianDateString(parseLocalDate(item.dueDate))}</span></span>`;
       }
 
       row.innerHTML = `
@@ -1839,7 +1841,7 @@ async function initChecklist() {
         <div class="checklist-item-content">
           <span class="checklist-item-text">${item.text}</span>
           <div class="checklist-item-dates">
-            <span class="checklist-item-date-created">ایجاد: ${item.createdAt}</span>
+            <span class="checklist-item-date-created">ایجاد: <span class="ltr-text">${item.createdAt}</span></span>
             ${overdueMarkup}
           </div>
         </div>
@@ -2006,6 +2008,23 @@ function initJalaliDatePicker() {
   triggerBtn.addEventListener("click", (e) => {
     e.stopPropagation();
     modal.classList.remove("hidden");
+    
+    if (hiddenInput.value) {
+      selectedDateStr = hiddenInput.value;
+      const parts = selectedDateStr.split("-");
+      if (parts.length === 3) {
+        const j = gregorianToJalali(parseInt(parts[0]), parseInt(parts[1]), parseInt(parts[2]));
+        dpYear = j.jy;
+        dpMonth = j.jm;
+      }
+    } else {
+      selectedDateStr = "";
+      const t = new Date();
+      const j = gregorianToJalali(t.getFullYear(), t.getMonth() + 1, t.getDate());
+      dpYear = j.jy;
+      dpMonth = j.jm;
+    }
+    
     renderDatePicker();
   });
 
@@ -2051,6 +2070,8 @@ function initJalaliDatePicker() {
     
     hiddenInput.value = selectedDateStr;
     const tj = gregorianToJalali(t.getFullYear(), t.getMonth() + 1, t.getDate());
+    dpYear = tj.jy;
+    dpMonth = tj.jm;
     label.innerText = `${toPersianDigits(tj.jd)} ${JALALI_MONTHS[tj.jm - 1]} ${toPersianDigits(tj.jy)}`;
     modal.classList.add("hidden");
   });
@@ -2131,6 +2152,13 @@ function initJalaliDatePicker() {
 function getTodayLocalDateStr() {
   const t = new Date();
   return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}-${String(t.getDate()).padStart(2, '0')}`;
+}
+
+function parseLocalDate(dateStr) {
+  if (!dateStr) return null;
+  const parts = dateStr.split('-');
+  if (parts.length !== 3) return new Date(dateStr);
+  return new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
 }
 
 async function initPlanner() {

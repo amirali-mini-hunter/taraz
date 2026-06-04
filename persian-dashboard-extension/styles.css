@@ -2777,10 +2777,10 @@ html {
   box-shadow: 0 4px 12px rgba(139, 92, 246, 0.2);
 }
 
-/* Planner Grid Layout - Vertical */
+/* Planner Grid Layout - Responsive Grid on Desktop */
 .planner-grid {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
   gap: 24px;
 }
 
@@ -2816,6 +2816,8 @@ html {
   color: #ef4444;
   text-shadow: 0 0 8px rgba(239, 68, 68, 0.3);
   letter-spacing: 0.5px;
+  direction: ltr;
+  display: inline-block;
 }
 
 .pomo-actions {
@@ -3414,7 +3416,7 @@ html {
 /* Mobile responsive planner */
 @media (max-width: 1200px) {
   .planner-grid {
-    flex-direction: column;
+    grid-template-columns: 1fr;
   }
   .planner-card {
     min-height: auto;
@@ -3998,6 +4000,34 @@ html {
   border-radius: 3px;
   transition: width 0.4s ease;
   box-shadow: 0 0 8px currentColor;
+}
+
+.ltr-text {
+  direction: ltr;
+  display: inline-block;
+  unicode-bidi: embed;
+}
+
+/* Layout Symmetry & Column Alignment stretch rules */
+.left-column .calendar-card {
+  flex: 1;
+}
+
+.center-column .shortcuts-card {
+  flex: 1;
+}
+
+.right-column .scratchpad-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.right-column .scratchpad-card .notebook-container,
+.right-column .scratchpad-card .checklist-container {
+  flex: 1;
+  height: auto;
+  min-height: 450px;
 }
 
 
