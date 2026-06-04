@@ -1308,6 +1308,8 @@ function setupSidebarPanels() {
     if (scrollTimeout) return;
     scrollTimeout = setTimeout(() => {
       scrollTimeout = null;
+      // Reveal the dock briefly on scroll, then let it auto-hide
+      revealSidebar();
       window.requestAnimationFrame(() => {
         let activeBtnId = "btn-home";
         let minDistance = Infinity;
@@ -1339,6 +1341,76 @@ function setupSidebarPanels() {
       });
     }, 80);
   });
+
+  // ===== Auto-hide sidebar: collapse to a slim handle, reveal on demand =====
+  const dashContainer = document.querySelector(".dashboard-container");
+  const sidebarHandle = document.querySelector(".sidebar-handle");
+  const sidebarHotzone = document.querySelector(".sidebar-hotzone");
+  const sidebarEl = document.querySelector(".floating-sidebar");
+  const desktopMq = window.matchMedia("(min-width: 769px)");
+  let hideTimer = null;
+
+  function isDesktop() {
+    return desktopMq.matches;
+  }
+
+  function collapseSidebar() {
+    if (!dashContainer || !isDesktop()) return;
+    dashContainer.classList.add("sidebar-collapsed");
+  }
+
+  function expandSidebar() {
+    if (!dashContainer) return;
+    dashContainer.classList.remove("sidebar-collapsed");
+    if (sidebarHandle) sidebarHandle.classList.remove("hint-pulse");
+  }
+
+  function scheduleHide() {
+    if (!isDesktop()) return;
+    if (hideTimer) clearTimeout(hideTimer);
+    hideTimer = setTimeout(collapseSidebar, 1000);
+  }
+
+  // revealSidebar is referenced by the scroll listener above (hoisted)
+  function revealSidebar() {
+    if (!isDesktop()) return;
+    expandSidebar();
+    scheduleHide();
+  }
+
+  // Reveal when the cursor reaches the right edge / handle
+  if (sidebarHotzone) {
+    sidebarHotzone.addEventListener("mouseenter", revealSidebar);
+  }
+  if (sidebarHandle) {
+    sidebarHandle.addEventListener("mouseenter", revealSidebar);
+    sidebarHandle.addEventListener("click", revealSidebar);
+  }
+
+  // Keep the dock open while the pointer is over it; hide shortly after leaving
+  if (sidebarEl) {
+    sidebarEl.addEventListener("mouseenter", () => {
+      if (hideTimer) clearTimeout(hideTimer);
+      expandSidebar();
+    });
+    sidebarEl.addEventListener("mouseleave", scheduleHide);
+  }
+
+  // Re-evaluate when crossing the mobile/desktop breakpoint
+  desktopMq.addEventListener("change", (e) => {
+    if (!e.matches) {
+      if (hideTimer) clearTimeout(hideTimer);
+      expandSidebar(); // mobile: bottom bar always visible (CSS neutralizes collapse)
+    } else {
+      scheduleHide();
+    }
+  });
+
+  // Start expanded so users see the dock, then auto-collapse after ~2s with a hint pulse
+  if (isDesktop() && sidebarHandle) {
+    sidebarHandle.classList.add("hint-pulse");
+  }
+  scheduleHide();
 
   // Drawer panel close handlers fallback
   if (closeAi && panelAi) {
