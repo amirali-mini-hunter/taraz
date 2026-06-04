@@ -1516,22 +1516,54 @@ function setupSidebarPanels() {
     if (chatInput) chatInput.disabled = !authed;
   }
 
-  // Discover models and populate the chooser; keep the saved preference if available
+  // A model is a text/chat model if it isn't one of the non-chat capability families.
+  function isChatModelId(id) {
+    return !/(\/edit\b|\/edit$|\/upscale\/|birefnet|ben\/v2|^tts-|gpt-4o-mini-tts|whisper|text-embedding-|veo|sora|imagen|flux|recraft|seedream|nano-banana|aura-sr|topaz|stable-diffusion|kling|wan-|ideogram|photon|fal-ai\/)/i.test(id);
+  }
+
+  // Friendly label for a raw model id (strip provider prefix, prettify).
+  function prettyModelName(id) {
+    const bare = id.split("/").pop();
+    const map = {
+      "gemini-2.5-flash-lite": "Gemini Flash Lite",
+      "gemini-2.5-flash": "Gemini Flash",
+      "gpt-5-mini": "GPT-5 mini",
+      "gpt-5-nano": "GPT-5 nano",
+      "claude-haiku-4-5": "Claude Haiku",
+      "claude-sonnet-4-5": "Claude Sonnet"
+    };
+    return map[bare] || bare;
+  }
+
+  // Populate the chooser from the LIVE model list (per AiPass guidance: never hardcode
+  // model ids). Option values are the real ids, so the selected model is used verbatim.
   async function refreshAgentModels() {
-    if (!isAgentAuthed() || !modelSelect) return;
+    if (!modelSelect || !isAgentAuthed()) return;
     try {
       const { data } = await AiPass.getModels();
-      const ids = (data || []).map(m => m.id);
-      const saved = await db.get("settings_agent_model", "gemini-2.5-flash-lite");
-      let firstAvailable = null;
-      Array.from(modelSelect.options).forEach(opt => {
-        const resolved = resolveAgentModelId(opt.value, ids);
-        opt.dataset.resolved = resolved || "";
-        opt.disabled = !resolved;
-        if (resolved && !firstAvailable) firstAvailable = opt.value;
+      const chatIds = (data || []).map(m => m.id).filter(isChatModelId);
+      if (!chatIds.length) return;
+
+      // Prefer a tidy ordering: known favourites first, then the rest alphabetically.
+      const favourites = ["gemini-2.5-flash-lite", "gemini-2.5-flash", "gpt-5-mini", "claude-haiku-4-5"];
+      const rank = (id) => {
+        const i = favourites.findIndex(f => id.includes(f));
+        return i === -1 ? favourites.length : i;
+      };
+      chatIds.sort((a, b) => (rank(a) - rank(b)) || a.localeCompare(b));
+
+      const saved = await db.get("settings_agent_model", null);
+      modelSelect.innerHTML = "";
+      chatIds.forEach(id => {
+        const opt = document.createElement("option");
+        opt.value = id;
+        opt.textContent = prettyModelName(id);
+        modelSelect.appendChild(opt);
       });
-      const savedOpt = Array.from(modelSelect.options).find(o => o.value === saved && !o.disabled);
-      modelSelect.value = savedOpt ? saved : (firstAvailable || saved);
+
+      const def = chatIds.find(id => id.includes("gemini-2.5-flash-lite")) || chatIds[0];
+      modelSelect.value = (saved && chatIds.includes(saved)) ? saved : def;
+      db.set("settings_agent_model", modelSelect.value);
     } catch (e) {
       console.warn("Could not load AI Pass models:", e);
     }
@@ -1558,13 +1590,8 @@ function setupSidebarPanels() {
     const typing = showTyping();
 
     try {
-      // Resolve the chosen model id against what's actually in the account
-      const { data } = await AiPass.getModels();
-      const ids = (data || []).map(m => m.id);
-      const preferred = modelSelect ? modelSelect.value : "gemini-2.5-flash-lite";
-      const modelId = resolveAgentModelId(preferred, ids)
-                   || resolveAgentModelId("gemini-2.5-flash-lite", ids)
-                   || ids[0];
+      // The dropdown holds real model ids (populated from getModels), so use it directly.
+      const modelId = (modelSelect && modelSelect.value) || "gemini/gemini-2.5-flash-lite";
 
       const completion = await AiPass.generateCompletion({
         messages: [
@@ -1649,7 +1676,7 @@ function setupSidebarPanels() {
 
   // Initial state
   updateAgentAuthState();
-  if (isAgentAuthed()) refreshAgentModels();
+  refreshAgentModels();
 
   // Apps Panel: Idea search and category tabs
   const ideaSearchInput = document.getElementById("idea-search-input");
@@ -1669,19 +1696,7 @@ function setupSidebarPanels() {
   });
 }
 
-// 12. AI Agent engine (powered by AI Pass) — model picking, prompting, and action execution
-
-// Resolve a friendly model key (e.g. "gemini-2.5-flash") to a concrete id present in the account
-function resolveAgentModelId(preferred, ids) {
-  if (!Array.isArray(ids) || !ids.length) return null;
-  // Exact match first
-  if (ids.includes(preferred)) return preferred;
-  // For flash-lite be specific; for plain flash avoid matching the lite variant
-  if (preferred === "gemini-2.5-flash") {
-    return ids.find(id => id.includes("gemini-2.5-flash") && !id.includes("flash-lite")) || null;
-  }
-  return ids.find(id => id.includes(preferred)) || null;
-}
+// 12. AI Agent engine (powered by AI Pass) — prompting and action execution
 
 // Build the system prompt: role, strict JSON action protocol, and a snapshot of current plans
 function buildAgentSystemPrompt() {
