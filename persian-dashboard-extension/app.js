@@ -1590,18 +1590,40 @@ function setupSidebarPanels() {
     const typing = showTyping();
 
     try {
-      // The dropdown holds real model ids (populated from getModels), so use it directly.
-      const modelId = (modelSelect && modelSelect.value) || "gemini/gemini-2.5-flash-lite";
+      // Validate the chosen id against the live list; map stale/short values to a real id.
+      let ids = [];
+      try { ids = ((await AiPass.getModels()).data || []).map(m => m.id); } catch (_) {}
+      let modelId = modelSelect && modelSelect.value;
+      if (!modelId || (ids.length && !ids.includes(modelId))) {
+        modelId = (modelId && ids.find(id => id.includes(modelId)))
+               || ids.find(id => id.includes("gemini-2.5-flash-lite"))
+               || ids.find(isChatModelId)
+               || ids[0]
+               || "gemini/gemini-2.5-flash-lite";
+      }
 
-      const completion = await AiPass.generateCompletion({
+      const requestOnce = (model) => AiPass.generateCompletion({
         messages: [
           { role: "system", content: buildAgentSystemPrompt() },
           { role: "user", content: text }
         ],
-        model: modelId,
-        temperature: 0.4,
-        maxTokens: 900
+        model,
+        temperature: 0.4
       });
+
+      let completion;
+      try {
+        completion = await requestOnce(modelId);
+      } catch (err) {
+        // Model rejected (e.g. 400/not available) — retry once with a safe default.
+        const fallback = ids.find(id => id.includes("gemini-2.5-flash-lite")) || ids.find(isChatModelId);
+        if (/400|not found|not available|invalid/i.test(err?.message || "") && fallback && fallback !== modelId) {
+          addMessage(`مدل انتخاب‌شده در دسترس نبود؛ از ${prettyModelName(fallback)} استفاده می‌کنم.`, "ai");
+          completion = await requestOnce(fallback);
+        } else {
+          throw err;
+        }
+      }
 
       typing.remove();
       const raw = completion?.choices?.[0]?.message?.content || "";
