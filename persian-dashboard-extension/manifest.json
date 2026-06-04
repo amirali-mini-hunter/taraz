@@ -15,7 +15,7 @@
   "web_accessible_resources": [
     {
       "resources": ["oauth-callback.html"],
-      "matches": ["https://aipass.one/*"]
+      "matches": ["<all_urls>"]
     }
   ],
   "icons": {
