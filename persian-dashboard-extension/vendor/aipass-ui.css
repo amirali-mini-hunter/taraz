@@ -1,0 +1,367 @@
+/**
+ * AI Pass UI Components v1.0.0
+ *
+ * Ready-to-use UI components for AI Pass authentication and balance display
+ *
+ * @license MIT
+ * @author AI Pass Team
+ * @see https://aipass.one
+ */
+
+ @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
+
+/* ============================================================================
+   AI PASS LOGO BUTTON
+   ============================================================================ */
+
+/* Base container */
+.logo-container {
+            display: inline-flex;
+            align-items: center;
+            text-decoration: none;
+            gap: 8px;
+            transition: all 0.3s ease;
+            padding: 4px 8px;
+            border-radius: 12px;
+            background-color: white;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(0, 0, 0, 0.06);
+            cursor: pointer;
+            width: fit-content;
+            position: relative;
+            overflow: hidden;
+        }
+
+.logo-container:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  transform: translateY(-1px);
+}
+
+/* AI box (purple box with "AI" text) */
+.ai-box {
+            background-color: #4F46E5;
+            color: white;
+            font-weight: bold;
+            font-size: 20px;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+.ai-box::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: rgba(255,255,255,0.15);
+  clip-path: polygon(0 0, 41.4% 0, 70.7% 29.3%, 0 100%);
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* "Pass" text */
+.pass-text {
+            color: #111111;
+            font-size: 24px;
+            font-weight: 900;
+            letter-spacing: -0.05em;
+            position: relative;
+            z-index: 1;
+        }
+
+/* "CONNECT" text (shown when disconnected) */
+.connect-text {
+  color: #111111;
+  font-size: 10px;
+  font-weight: 600;
+  margin-left: 4px;
+  letter-spacing: 0.5px;
+  align-self: center;
+}
+
+/* Balance box (shown when connected) */
+.balance-box {
+  background-color: #f0f0f0;
+  color: #2563eb;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 6px;
+  border-radius: 4px;
+  margin-left: 6px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Outfit', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  position: relative;
+  z-index: 1;
+  white-space: nowrap;
+}
+
+/* ============================================================================
+   RIPPLE / PULSE ANIMATION (Connected State)
+   ============================================================================ */
+
+.logo-container .ripple {
+  position: absolute;
+  top: 50%;
+  left: 18px;
+  transform: translate(-50%, -50%);
+  width: 10px;
+  height: 10px;
+  background-color: rgba(79, 70, 229, 0.3);
+  border-radius: 50%;
+  z-index: 0;
+  animation: aipass-ripple 3s linear infinite;
+}
+
+.logo-container .ripple:nth-child(2) {
+  animation-delay: 1s;
+}
+
+.logo-container .ripple:nth-child(3) {
+  animation-delay: 2s;
+}
+
+@keyframes aipass-ripple {
+  0% {
+    width: 0px;
+    height: 0px;
+    opacity: 0.8;
+  }
+  100% {
+    width: 150px;
+    height: 150px;
+    opacity: 0;
+  }
+}
+
+/* Connected background pulse */
+.logo-container.connected::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(79, 70, 229, 0.05);
+  border-radius: 12px;
+  animation: aipass-pulse 2s infinite;
+  z-index: 0;
+}
+
+@keyframes aipass-pulse {
+  0% { opacity: 0.3; }
+  50% { opacity: 0.1; }
+  100% { opacity: 0.3; }
+}
+
+/* ============================================================================
+   DARK VARIANT (Disconnected State)
+   ============================================================================ */
+
+.logo-container.dark {
+  background-color: white;
+}
+
+.logo-container.dark .ai-box {
+            background-color: #4F46E5;
+            color: white;
+            font-weight: bold;
+            font-size: 20px;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+.logo-container.dark .ai-box::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: rgba(255,255,255,0.15);
+  clip-path: polygon(0 0, 41.4% 0, 70.7% 29.3%, 0 100%);
+  z-index: -1;
+  pointer-events: none;
+}
+
+.logo-container.dark .pass-text {
+            color: #111111;
+            font-size: 24px;
+            font-weight: 900;
+            letter-spacing: -0.05em;
+            position: relative;
+            z-index: 1;
+        }
+
+.logo-container.dark .connect-text {
+  color: #111111;
+}
+
+/* ============================================================================
+   AI PASS GLASS HEADER (Home Standard)
+   ============================================================================ */
+
+.glass-header {
+  position: relative; /* Changed from fixed to allow page-specific positioning */
+  width: 100%;
+  min-height: 80px;
+  background-color: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  display: flex;
+  align-items: center;
+  z-index: 1000;
+  transition: all 0.3s ease;
+}
+
+.glass-header.fixed {
+  position: fixed;
+  top: 0;
+  left: 0;
+}
+
+
+.header-inner {
+  max-width: 1280px; /* max-w-7xl equvalent */
+  margin: 0 auto;
+  padding: 0 24px;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* ============================================================================
+   AI PASS LOGO (Perfect Standard)
+   ============================================================================ */
+
+.logo-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  transition: opacity 0.2s ease;
+}
+
+.logo-link:hover {
+  opacity: 0.9;
+}
+
+.ai-icon-box {
+  background-color: #4F46E5;
+  color: white;
+  font-weight: 700;
+  font-size: 20px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.ai-icon-box::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: rgba(255, 255, 255, 0.15);
+  clip-path: polygon(0 0, 41.4% 0, 70.7% 29.3%, 0 100%);
+  z-index: 1;
+}
+
+.text-pass {
+  color: #111111;
+  font-size: 24px;
+  font-weight: 900;
+  letter-spacing: -0.07em; /* "tracking-tighterer" equivalent */
+  font-family: 'Outfit', sans-serif;
+}
+
+/* ============================================================================
+   SIZE VARIANTS (Optional)
+   ============================================================================ */
+
+/* Small variant */
+.logo-container.small .ai-box {
+            background-color: #4F46E5;
+            color: white;
+            font-weight: bold;
+            font-size: 20px;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+.logo-container.small .pass-text {
+            color: #111111;
+            font-size: 24px;
+            font-weight: 900;
+            letter-spacing: -0.05em;
+            position: relative;
+            z-index: 1;
+        }
+
+.logo-container.small .connect-text {
+  font-size: 8px;
+}
+
+.logo-container.small .balance-box {
+  font-size: 10px;
+  padding: 2px 4px;
+}
+
+/* Large variant */
+.logo-container.large .ai-box {
+            background-color: #4F46E5;
+            color: white;
+            font-weight: bold;
+            font-size: 20px;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+.logo-container.large .pass-text {
+            color: #111111;
+            font-size: 24px;
+            font-weight: 900;
+            letter-spacing: -0.05em;
+            position: relative;
+            z-index: 1;
+        }
+
+.logo-container.large .connect-text {
+  font-size: 12px;
+}
+
+.logo-container.large .balance-box {
+  font-size: 14px;
+  padding: 4px 8px;
+}

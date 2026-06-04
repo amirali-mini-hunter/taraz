@@ -9,6 +9,15 @@
   "permissions": [
     "storage"
   ],
+  "host_permissions": [
+    "https://aipass.one/*"
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["oauth-callback.html"],
+      "matches": ["https://aipass.one/*"]
+    }
+  ],
   "icons": {
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",
