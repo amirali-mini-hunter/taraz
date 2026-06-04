@@ -245,6 +245,75 @@ body {
   100% { opacity: 0.6; box-shadow: 0 0 4px var(--accent-gold); }
 }
 
+/* ===== Auto-hide sidebar: collapsed state + slim accent handle (desktop) ===== */
+
+/* Collapsed: slide the dock fully off the right edge (kept vertically centered) */
+.dashboard-container.sidebar-collapsed .floating-sidebar {
+  transform: translateY(-50%) translateX(calc(100% + 32px));
+  pointer-events: none;
+}
+
+/* Slim accent grip handle pinned to the right edge, only visible when collapsed */
+.sidebar-handle {
+  position: fixed;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 9px;
+  height: 84px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: linear-gradient(180deg, var(--accent-gold), color-mix(in srgb, var(--accent-gold) 55%, transparent));
+  border-radius: 10px 0 0 10px;
+  box-shadow: -2px 0 14px color-mix(in srgb, var(--accent-gold) 45%, transparent);
+  cursor: pointer;
+  z-index: 1001;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease, width 0.2s ease;
+}
+
+.dashboard-container.sidebar-collapsed .sidebar-handle {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.sidebar-handle:hover {
+  width: 13px;
+}
+
+.sidebar-handle-dot {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+}
+
+/* One-time hint pulse on the handle when it first appears */
+.dashboard-container.sidebar-collapsed .sidebar-handle.hint-pulse {
+  animation: handleHintPulse 1.6s ease 2;
+}
+
+@keyframes handleHintPulse {
+  0%, 100% { box-shadow: -2px 0 14px color-mix(in srgb, var(--accent-gold) 45%, transparent); }
+  50% { box-shadow: -2px 0 22px color-mix(in srgb, var(--accent-gold) 90%, transparent); width: 13px; }
+}
+
+/* Invisible right-edge hover zone used to reveal the dock */
+.sidebar-hotzone {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 40px;
+  height: 100%;
+  z-index: 999;
+  background: transparent;
+  pointer-events: auto;
+}
+
 /* Main Grid Layout */
 .dashboard-grid {
   display: grid;
@@ -1740,6 +1809,15 @@ body {
     gap: 0;
     box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.4);
     z-index: 1000;
+  }
+  /* Disable desktop auto-hide on mobile: dock stays as the bottom bar */
+  .dashboard-container.sidebar-collapsed .floating-sidebar {
+    transform: none;
+    pointer-events: auto;
+  }
+  .sidebar-handle,
+  .sidebar-hotzone {
+    display: none !important;
   }
   .sidebar-top, .sidebar-bottom {
     flex-direction: row;
