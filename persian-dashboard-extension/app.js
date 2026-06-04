@@ -2,6 +2,42 @@
  * Persian Dashboard Application Orchestration
  */
 
+// Initialize the AI Pass SDK here (NOT via an inline <script>): MV3's default
+// extension CSP (script-src 'self') blocks inline scripts, so initialization must
+// live in an external file. No requireLogin — the dashboard stays usable logged out.
+
+// The OAuth redirect target. Must resolve to the same absolute URL in both the
+// dashboard and the callback page so the token exchange's redirect_uri matches.
+function aipassRedirectUri() {
+  if (typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.getURL) {
+    return chrome.runtime.getURL("oauth-callback.html");
+  }
+  return new URL("oauth-callback.html", window.location.href).href;
+}
+
+window.__aipassReady = false;
+if (typeof AiPass !== "undefined") {
+  try {
+    AiPass.initialize({
+      clientId: "client_d7dN68jgxdY-B2rf0NFbSg",
+      // Same-tab redirect flow: in an extension new-tab page, popup windows lose the
+      // window.opener link and their sessionStorage doesn't hold the PKCE verifier,
+      // so the popup flow can't exchange the code. Redirect keeps state in this one tab.
+      authFlow: "redirect",
+      // Redirect to a dedicated web-accessible callback page. The new-tab override page
+      // (index.html) is NOT web-accessible, so Chrome blocks (ERR_BLOCKED_BY_CLIENT) the
+      // OAuth redirect back to it. oauth-callback.html is declared in web_accessible_resources.
+      redirectUri: aipassRedirectUri(),
+      darkMode: true
+    });
+    window.__aipassReady = true;
+    // Make sure the [data-aipass-button] widget mounts even if it was added after init.
+    if (typeof AiPassUI !== "undefined") AiPassUI.reinit();
+  } catch (e) {
+    console.warn("[Taraz] AI Pass init failed (use the extension or localhost, not file://):", e.message);
+  }
+}
+
 // Storage Wrapper supporting Chrome Extension storage and localStorage fallback
 const db = {
   async get(key, defaultValue = null) {
@@ -1433,11 +1469,21 @@ function setupSidebarPanels() {
     });
   }
 
-  // AI Chat Interface logic
+  // ===== AI Agent (AI Pass) — reads & modifies the user's plans =====
   const chatInput = document.getElementById("chat-input");
   const chatSendBtn = document.getElementById("btn-chat-send");
   const chatMessages = document.getElementById("chat-messages");
   const suggestBtns = document.querySelectorAll(".chat-suggest-btn");
+  const aiPanelBody = document.querySelector("#panel-ai .ai-panel-body");
+  const agentTrigger = document.getElementById("agent-trigger");
+  const modelSelect = document.getElementById("agent-model-select");
+
+  const hasAiPass = () => typeof AiPass !== "undefined" && window.__aipassReady === true;
+  // isAuthenticated() throws if the SDK never initialized — guard every call.
+  const isAgentAuthed = () => {
+    try { return hasAiPass() && AiPass.isAuthenticated(); }
+    catch (e) { return false; }
+  };
 
   function addMessage(text, sender) {
     const bubble = document.createElement("div");
@@ -1445,16 +1491,170 @@ function setupSidebarPanels() {
     bubble.innerText = text;
     chatMessages.appendChild(bubble);
     chatMessages.scrollTop = chatMessages.scrollHeight;
+    return bubble;
   }
 
-  function sendChatMessage(text) {
+  function addActionNote(text) {
+    const note = document.createElement("div");
+    note.className = "chat-action-note";
+    note.innerText = "✓ " + text;
+    chatMessages.appendChild(note);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
+
+  function showTyping() {
+    const bubble = document.createElement("div");
+    bubble.className = "chat-bubble ai typing";
+    bubble.innerHTML = "<span></span><span></span><span></span>";
+    chatMessages.appendChild(bubble);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+    return bubble;
+  }
+
+  // Reflect auth state in the UI (lock input + chips while logged out)
+  function updateAgentAuthState() {
+    const authed = isAgentAuthed();
+    if (aiPanelBody) aiPanelBody.classList.toggle("agent-locked", !authed);
+    if (chatInput) chatInput.disabled = !authed;
+  }
+
+  // A model is a text/chat model if it isn't one of the non-chat capability families.
+  function isChatModelId(id) {
+    return !/(\/edit\b|\/edit$|\/upscale\/|birefnet|ben\/v2|^tts-|gpt-4o-mini-tts|whisper|text-embedding-|veo|sora|imagen|flux|recraft|seedream|nano-banana|aura-sr|topaz|stable-diffusion|kling|wan-|ideogram|photon|fal-ai\/)/i.test(id);
+  }
+
+  // Gemini models must be sent to the completions endpoint with the "gemini/" provider
+  // prefix (gpt-* and claude-* work bare). getModels sometimes lists them without it.
+  function normalizeModelId(id) {
+    if (!id || id.includes("/")) return id;
+    if (/^gemini[-_]/i.test(id)) return "gemini/" + id;
+    return id;
+  }
+
+  // Friendly label for a raw model id (strip provider prefix, prettify).
+  function prettyModelName(id) {
+    const bare = id.split("/").pop();
+    const map = {
+      "gemini-2.5-flash-lite": "Gemini Flash Lite",
+      "gemini-2.5-flash": "Gemini Flash",
+      "gpt-5-mini": "GPT-5 mini",
+      "gpt-5-nano": "GPT-5 nano",
+      "claude-haiku-4-5": "Claude Haiku",
+      "claude-sonnet-4-5": "Claude Sonnet"
+    };
+    return map[bare] || bare;
+  }
+
+  // Populate the chooser from the LIVE model list (per AiPass guidance: never hardcode
+  // model ids). Option values are the real ids, so the selected model is used verbatim.
+  async function refreshAgentModels() {
+    if (!modelSelect || !isAgentAuthed()) return;
+    try {
+      const { data } = await AiPass.getModels();
+      const chatIds = (data || []).map(m => m.id).filter(isChatModelId);
+      if (!chatIds.length) return;
+
+      // Prefer a tidy ordering: known favourites first, then the rest alphabetically.
+      const favourites = ["gemini-2.5-flash-lite", "gemini-2.5-flash", "gpt-5-mini", "claude-haiku-4-5"];
+      const rank = (id) => {
+        const i = favourites.findIndex(f => id.includes(f));
+        return i === -1 ? favourites.length : i;
+      };
+      chatIds.sort((a, b) => (rank(a) - rank(b)) || a.localeCompare(b));
+
+      const saved = await db.get("settings_agent_model", null);
+      modelSelect.innerHTML = "";
+      chatIds.forEach(id => {
+        const opt = document.createElement("option");
+        opt.value = normalizeModelId(id);
+        opt.textContent = prettyModelName(id);
+        modelSelect.appendChild(opt);
+      });
+
+      const def = chatIds.find(id => id.includes("gemini-2.5-flash-lite")) || chatIds[0];
+      modelSelect.value = (saved && chatIds.includes(saved)) ? saved : def;
+      db.set("settings_agent_model", modelSelect.value);
+    } catch (e) {
+      console.warn("Could not load AI Pass models:", e);
+    }
+  }
+
+  if (modelSelect) {
+    modelSelect.addEventListener("change", () => {
+      db.set("settings_agent_model", modelSelect.value);
+    });
+  }
+
+  async function sendChatMessage(text) {
     if (!text.trim()) return;
+    if (!hasAiPass()) {
+      addMessage("اتصال به AI Pass در دسترس نیست. لطفاً افزونه را در مرورگر باز کنید (نه با file://).", "ai");
+      return;
+    }
+    if (!isAgentAuthed()) {
+      addMessage("برای استفاده از دستیار، ابتدا از طریق دکمه‌ی بالا وارد حساب AI Pass شوید.", "ai");
+      return;
+    }
+
     addMessage(text, "user");
-    
-    setTimeout(() => {
-      const response = getAiResponse(text);
-      addMessage(response, "ai");
-    }, 450);
+    const typing = showTyping();
+
+    try {
+      // Validate the chosen id against the live list; map stale/short values to a real id.
+      let ids = [];
+      try { ids = ((await AiPass.getModels()).data || []).map(m => m.id); } catch (_) {}
+      let modelId = modelSelect && modelSelect.value;
+      if (!modelId || (ids.length && !ids.includes(modelId))) {
+        modelId = (modelId && ids.find(id => id.includes(modelId)))
+               || ids.find(id => id.includes("gemini-2.5-flash-lite"))
+               || ids.find(isChatModelId)
+               || ids[0]
+               || "gemini/gemini-2.5-flash-lite";
+      }
+      modelId = normalizeModelId(modelId);
+
+      const requestOnce = (model) => AiPass.generateCompletion({
+        messages: [
+          { role: "system", content: buildAgentSystemPrompt() },
+          { role: "user", content: text }
+        ],
+        model,
+        temperature: 0.4
+      });
+
+      let completion;
+      try {
+        completion = await requestOnce(modelId);
+      } catch (err) {
+        // Model rejected (e.g. 400/not available) — retry once with a safe default.
+        const fallback = normalizeModelId(ids.find(id => id.includes("gemini-2.5-flash-lite")) || ids.find(isChatModelId));
+        if (/400|not found|not available|invalid/i.test(err?.message || "") && fallback && fallback !== modelId) {
+          addMessage(`مدل انتخاب‌شده در دسترس نبود؛ از ${prettyModelName(fallback)} استفاده می‌کنم.`, "ai");
+          completion = await requestOnce(fallback);
+        } else {
+          throw err;
+        }
+      }
+
+      typing.remove();
+      const raw = completion?.choices?.[0]?.message?.content || "";
+      const parsed = parseAgentResponse(raw);
+      if (parsed.reply) addMessage(parsed.reply, "ai");
+
+      if (Array.isArray(parsed.actions) && parsed.actions.length) {
+        const summaries = await applyAgentActions(parsed.actions);
+        summaries.forEach(addActionNote);
+      }
+    } catch (e) {
+      typing.remove();
+      if (e && e.budgetExceededHandled) return;
+      if (/401|unauthor/i.test(e?.message || "")) {
+        addMessage("نشست شما منقضی شده است. لطفاً دوباره وارد شوید.", "ai");
+        try { await AiPass.login(); } catch (_) {}
+        return;
+      }
+      addMessage("خطایی رخ داد: " + (e?.message || "نامشخص"), "ai");
+    }
   }
 
   chatSendBtn.addEventListener("click", () => {
@@ -1473,10 +1673,43 @@ function setupSidebarPanels() {
 
   suggestBtns.forEach(btn => {
     btn.addEventListener("click", () => {
-      const prompt = btn.getAttribute("data-prompt");
-      sendChatMessage(prompt);
+      sendChatMessage(btn.getAttribute("data-prompt"));
     });
   });
+
+  // Middle-top trigger opens the agent panel
+  if (agentTrigger && panelAi) {
+    agentTrigger.addEventListener("click", () => {
+      panelAi.classList.toggle("active");
+      window.playUIClickSound && window.playUIClickSound();
+    });
+  }
+
+  // Auth lifecycle wiring. The SDK fires the DOM "aipass:login" event only on the
+  // button-click (popup) path; the redirect flow completes via the internal emitter,
+  // so bind both. Guard against double-binding the welcome message.
+  let agentWelcomed = false;
+  function onAgentLogin() {
+    updateAgentAuthState();
+    refreshAgentModels();
+    if (!agentWelcomed) {
+      agentWelcomed = true;
+      addMessage("به دستیار برنامه‌ریزی خوش آمدید! حالا می‌توانم کارها و عادت‌های شما را مدیریت کنم.", "ai");
+    }
+  }
+  document.addEventListener("aipass:login", onAgentLogin);
+  document.addEventListener("aipass:logout", updateAgentAuthState);
+  document.addEventListener("aipass:error", (e) => {
+    console.warn("AI Pass error:", e.detail && e.detail.error);
+  });
+  if (hasAiPass() && typeof AiPass.on === "function") {
+    AiPass.on("login", onAgentLogin);
+    AiPass.on("logout", updateAgentAuthState);
+  }
+
+  // Initial state
+  updateAgentAuthState();
+  refreshAgentModels();
 
   // Apps Panel: Idea search and category tabs
   const ideaSearchInput = document.getElementById("idea-search-input");
@@ -1496,34 +1729,211 @@ function setupSidebarPanels() {
   });
 }
 
-// 12. Local AI Chat responses
-const AI_RESPONSES = {
-  general: "من دستیار محلی شما هستم. می‌توانم به شما در ایده‌یابی، مدیریت کارها و بهبود راندمان کاریتان کمک کنم. پیشنهاد می‌کنم از بخش ایده‌ها در منوی برنامه‌ها نیز استفاده کنید!",
-  poem: "بگذارید شعری الهام‌بخش برایتان بخوانم:\n«هرگز نمیرد آن که دلش زنده شد به عشق / ثبت است بر جریده‌ی عالم دوام ما»\nتلاش امروز شماست که فردایتان را می‌سازد!",
-  planning: "برای داشتن روزی موفق، پیشنهاد می‌کنم روز خود را به بازه‌های تمرکز پومودورو (۲۵ دقیقه کار و ۵ دقیقه استراحت) تقسیم کنید. اهداف اصلی امروزتان را هم‌اکنون در دفترچه یادداشت سمت چپ ثبت کنید.",
-  coding: "برنامه‌نویسی مسیر فوق‌العاده‌ای است. سعی کنید یکی از ۵۰ ایده برنامه‌نویسی پنل برنامه‌ها را انتخاب کرده و امروز یک پروژه کوچک از آن بسازید!",
-  thanks: "خواهش می‌کنم! من همیشه اینجا هستم تا به شما کمک کنم. موفق باشید! ✨",
-  hello: "سلام! روز خوبی داشته باشید. چطور می‌توانم در کارهای امروزتان کمکتان کنم؟"
-};
+// 12. AI Agent engine (powered by AI Pass) — prompting and action execution
 
-function getAiResponse(message) {
-  const msg = message.toLowerCase().trim();
-  if (msg.includes("شعر") || msg.includes("انگیزشی") || msg.includes("حافظ") || msg.includes("سخن")) {
-    return AI_RESPONSES.poem;
+// Build the system prompt: role, strict JSON action protocol, and a snapshot of current plans
+function buildAgentSystemPrompt() {
+  const today = getTodayLocalDateStr();
+  const catList = plannerCategories.map(c => `${c.id} (${c.name})`).join("، ");
+  const todaysTasks = plannerTasks
+    .filter(t => t.date === today)
+    .map(t => `- id=${t.id} | "${t.text}" | ${t.completed ? "انجام‌شده" : "باز"} | اولویت=${t.priority} | زمان=${t.timeOfDay} | دسته=${t.category}`)
+    .join("\n") || "(هیچ تسکی برای امروز نیست)";
+  const habitsList = plannerHabits
+    .map(h => {
+      const done = plannerHabitLogs[h.id] && plannerHabitLogs[h.id][today] ? "امروز انجام شده" : "امروز انجام نشده";
+      return `- id=${h.id} | "${h.name}" | دسته=${h.category} | ${done}`;
+    })
+    .join("\n") || "(هیچ عادتی ثبت نشده)";
+  const openChecklist = (typeof checklistItems !== "undefined" ? checklistItems : [])
+    .filter(i => !i.completed)
+    .map(i => `- id=${i.id} | "${i.text}" | موعد=${i.dueDate || "ندارد"}`)
+    .join("\n") || "(چک‌لیست خالی است)";
+
+  return `تو «دستیار برنامه‌ریزی» فارسی‌زبان داشبورد تاراز هستی. به کاربر در سازماندهی کارها، عادت‌ها و چک‌لیست کمک می‌کنی و می‌توانی مستقیماً آن‌ها را تغییر دهی.
+
+تاریخ امروز (میلادی): ${today}
+دسته‌بندی‌های موجود: ${catList}
+
+کارهای امروز:
+${todaysTasks}
+
+عادت‌ها:
+${habitsList}
+
+چک‌لیست باز:
+${openChecklist}
+
+قوانین پاسخ:
+- همیشه فقط و فقط یک شیء JSON معتبر برگردان، بدون متن اضافه و بدون بلوک کد.
+- ساختار: {"reply": "پاسخ کوتاه و دوستانه به فارسی", "actions": [ ... ]}
+- اگر نیازی به تغییر داده نیست، actions را آرایه‌ی خالی بگذار.
+- تاریخ‌ها همیشه به فرمت میلادی YYYY-MM-DD باشند. برای حذف/تکمیل، در صورت امکان از id استفاده کن وگرنه از text.
+- مقادیر مجاز: priority ∈ {high, medium, low}؛ timeOfDay ∈ {morning, noon, evening, night}؛ category باید یکی از idهای بالا باشد.
+
+انواع action مجاز:
+- {"type":"add_task","text":"...","category":"work","priority":"medium","timeOfDay":"morning","date":"YYYY-MM-DD","estimatedTime":30}
+- {"type":"complete_task","id":"..."} یا {"type":"complete_task","text":"..."}
+- {"type":"delete_task","id":"..."}
+- {"type":"reschedule_task","id":"...","date":"YYYY-MM-DD"}
+- {"type":"set_priority","id":"...","priority":"high"}
+- {"type":"set_time_of_day","id":"...","timeOfDay":"evening"}
+- {"type":"add_checklist_item","text":"...","dueDate":"YYYY-MM-DD"}
+- {"type":"complete_checklist_item","id":"..."}
+- {"type":"add_habit","name":"...","category":"health"}
+- {"type":"log_habit","id":"...","date":"YYYY-MM-DD"}`;
+}
+
+// Tolerantly parse the model's reply into { reply, actions }
+function parseAgentResponse(raw) {
+  if (!raw) return { reply: "", actions: [] };
+  let txt = raw.trim();
+  // Strip ```json fences if present
+  txt = txt.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
+  // Extract the outermost JSON object if there is surrounding prose
+  const first = txt.indexOf("{");
+  const last = txt.lastIndexOf("}");
+  if (first !== -1 && last !== -1 && last > first) {
+    const candidate = txt.slice(first, last + 1);
+    try {
+      const obj = JSON.parse(candidate);
+      return {
+        reply: typeof obj.reply === "string" ? obj.reply : "",
+        actions: Array.isArray(obj.actions) ? obj.actions : []
+      };
+    } catch (_) { /* fall through */ }
   }
-  if (msg.includes("برنامه") || msg.includes("کارها") || msg.includes("تسک") || msg.includes("برنامه‌ریزی")) {
-    return AI_RESPONSES.planning;
+  // Not JSON — treat the whole thing as a plain reply
+  return { reply: raw, actions: [] };
+}
+
+// Apply a list of agent actions to the planner data, persist, and re-render. Returns Persian summaries.
+async function applyAgentActions(actions) {
+  const summaries = [];
+  const today = getTodayLocalDateStr();
+  let tasksChanged = false, habitsChanged = false, checklistChanged = false;
+  let idSeed = Date.now();
+  const nextId = () => String(idSeed++);
+
+  const validCat = (c) => plannerCategories.some(pc => pc.id === c) ? c : (plannerCategories[0] ? plannerCategories[0].id : "general");
+  const findTask = (a) => a.id ? plannerTasks.find(t => t.id === a.id)
+                               : plannerTasks.find(t => a.text && t.text.includes(a.text));
+  const findHabit = (a) => a.id ? plannerHabits.find(h => h.id === a.id)
+                                : plannerHabits.find(h => a.name && h.name.includes(a.name));
+
+  for (const a of actions) {
+    try {
+      switch (a.type) {
+        case "add_task": {
+          plannerTasks.push({
+            id: nextId(),
+            text: a.text || "کار جدید",
+            category: validCat(a.category),
+            completed: false,
+            date: a.date || today,
+            priority: ["high", "medium", "low"].includes(a.priority) ? a.priority : "medium",
+            timeOfDay: ["morning", "noon", "evening", "night"].includes(a.timeOfDay) ? a.timeOfDay : "morning",
+            estimatedTime: Number(a.estimatedTime) || 0
+          });
+          tasksChanged = true;
+          summaries.push(`کار اضافه شد: «${a.text || "کار جدید"}»`);
+          break;
+        }
+        case "complete_task": {
+          const t = findTask(a);
+          if (t) { t.completed = true; tasksChanged = true; summaries.push(`انجام شد: «${t.text}»`); }
+          break;
+        }
+        case "delete_task": {
+          const t = findTask(a);
+          if (t) {
+            plannerTasks.splice(plannerTasks.indexOf(t), 1);
+            tasksChanged = true; summaries.push(`حذف شد: «${t.text}»`);
+          }
+          break;
+        }
+        case "reschedule_task": {
+          const t = findTask(a);
+          if (t && a.date) { t.date = a.date; tasksChanged = true; summaries.push(`زمان‌بندی «${t.text}» به ${a.date} تغییر کرد`); }
+          break;
+        }
+        case "set_priority": {
+          const t = findTask(a);
+          if (t && ["high", "medium", "low"].includes(a.priority)) { t.priority = a.priority; tasksChanged = true; summaries.push(`اولویت «${t.text}» تغییر کرد`); }
+          break;
+        }
+        case "set_time_of_day": {
+          const t = findTask(a);
+          if (t && ["morning", "noon", "evening", "night"].includes(a.timeOfDay)) { t.timeOfDay = a.timeOfDay; tasksChanged = true; summaries.push(`زمان روز «${t.text}» تغییر کرد`); }
+          break;
+        }
+        case "add_checklist_item": {
+          if (typeof checklistItems !== "undefined") {
+            const todayJalali = gregorianToJalali(new Date().getFullYear(), new Date().getMonth() + 1, new Date().getDate());
+            checklistItems.push({
+              id: nextId(),
+              text: a.text || "مورد جدید",
+              completed: false,
+              createdAt: toPersianDigits(`${todayJalali.jy}/${todayJalali.jm}/${todayJalali.jd}`),
+              dueDate: a.dueDate || null
+            });
+            checklistChanged = true;
+            summaries.push(`به چک‌لیست اضافه شد: «${a.text || "مورد جدید"}»`);
+          }
+          break;
+        }
+        case "complete_checklist_item": {
+          if (typeof checklistItems !== "undefined") {
+            const item = a.id ? checklistItems.find(i => i.id === a.id)
+                              : checklistItems.find(i => a.text && i.text.includes(a.text));
+            if (item) { item.completed = true; item.completedAt = today; checklistChanged = true; summaries.push(`چک‌لیست تکمیل شد: «${item.text}»`); }
+          }
+          break;
+        }
+        case "add_habit": {
+          plannerHabits.push({ id: nextId(), name: a.name || "عادت جدید", category: validCat(a.category) });
+          habitsChanged = true;
+          summaries.push(`عادت اضافه شد: «${a.name || "عادت جدید"}»`);
+          break;
+        }
+        case "log_habit": {
+          const h = findHabit(a);
+          if (h) {
+            const dk = a.date || today;
+            if (!plannerHabitLogs[h.id]) plannerHabitLogs[h.id] = {};
+            plannerHabitLogs[h.id][dk] = true;
+            habitsChanged = true;
+            summaries.push(`عادت ثبت شد: «${h.name}»`);
+          }
+          break;
+        }
+        default:
+          break;
+      }
+    } catch (e) {
+      console.warn("Action failed:", a, e);
+    }
   }
-  if (msg.includes("کد") || msg.includes("برنامه‌نویسی") || msg.includes("وب") || msg.includes("پروژه")) {
-    return AI_RESPONSES.coding;
+
+  // Persist + re-render only what changed
+  if (tasksChanged) {
+    await db.set("planner_tasks", plannerTasks);
+    window.renderPlannerTasks && window.renderPlannerTasks();
   }
-  if (msg.includes("ممنون") || msg.includes("تشکر") || msg.includes("سپاس") || msg.includes("مرسی")) {
-    return AI_RESPONSES.thanks;
+  if (habitsChanged) {
+    await db.set("planner_habits", plannerHabits);
+    await db.set("planner_habit_logs", plannerHabitLogs);
+    window.renderHabits && window.renderHabits();
   }
-  if (msg.includes("سلام") || msg.includes("درود")) {
-    return AI_RESPONSES.hello;
+  if (checklistChanged) {
+    await db.set("user_checklist", checklistItems);
+    window.renderChecklist && window.renderChecklist();
   }
-  return `درخواست شما را شنیدم: "${message}". به‌عنوان دستیار محلی شما، پیشنهاد می‌کنم برای ایده‌های نوآورانه حتماً بخش برنامه‌ها را چک کنید و اهداف روزانه خود را در دفترچه یادداشت ثبت نمایید تا متمرکز بمانید!`;
+  if ((tasksChanged || habitsChanged) && typeof selectedCalYear !== "undefined") {
+    updateInteractiveAnalytics(selectedCalYear, selectedCalMonth, selectedCalDay);
+  }
+
+  return summaries;
 }
 
 // 13. Ideas Bank Database (50 Curated Ideas)
